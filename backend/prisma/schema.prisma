@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PROFESSIONAL
+  RECRUITER
+  FREELANCER
+  STARTUP_FOUNDER
+  INVESTOR
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  role          Role      @default(PROFESSIONAL)
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  profile       Profile?
+  jobs          Job[]     @relation("PostedBy")
+  applications  Application[]
+  company       Company?  @relation(fields: [companyId], references: [id])
+  companyId     String?
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  skills      String[]
+  experience  Json?    // Array of experience objects
+  education   Json?    // Array of education objects
+  githubUrl   String?
+  linkedinUrl String?
+  websiteUrl  String?
+  resumeUrl   String?
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  logo        String?
+  website     String?
+  description String?
+  industry    String?
+  employees   User[]
+  jobs        Job[]
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  location    String
+  salaryRange String?
+  type        String   // Full-time, Part-time, Contract, etc.
+  postedById  String
+  postedBy    User     @relation("PostedBy", fields: [postedById], references: [id])
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  applications Application[]
+}
+
+model Application {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  status    String   @default("PENDING") // PENDING, SHORTLISTED, REJECTED
+  createdAt DateTime @default(now())
+}
