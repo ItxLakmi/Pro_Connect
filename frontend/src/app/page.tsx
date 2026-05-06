@@ -41,31 +41,9 @@ export default function Home() {
         <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-accent-secondary/20 rounded-full blur-[100px] animate-glow" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between glass px-6 py-3 rounded-2xl">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent-secondary rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" fill="white" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">ProConnect</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-foreground/70">
-            <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-            <a href="#about" className="hover:text-foreground transition-colors">About</a>
-            <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-sm font-medium hover:text-accent transition-colors">Log in</button>
-            <button className="bg-foreground text-background px-5 py-2 rounded-xl text-sm font-semibold hover:bg-foreground/90 transition-all shadow-lg shadow-white/5">
-              Join Now
-            </button>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <main className="pt-32 pb-20 px-6">
+
         <motion.div 
           className="max-w-7xl mx-auto text-center"
           variants={containerVariants}

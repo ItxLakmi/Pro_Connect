@@ -11,5 +11,8 @@
     "build:frontend": "npm run build --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
     "install:all": "npm install"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0"
   }
 }

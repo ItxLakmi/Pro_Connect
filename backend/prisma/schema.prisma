@@ -2,9 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
+
 datasource db {
   provider = "postgresql"
 }
+
+
+
 
 enum Role {
   PROFESSIONAL
@@ -13,6 +18,8 @@ enum Role {
   STARTUP_FOUNDER
   INVESTOR
   ADMIN
+  PARTNER
+  MENTOR
 }
 
 model User {
@@ -23,7 +30,6 @@ model User {
   firstName     String?
   lastName      String?
   avatar        String?
-  bio           String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -38,14 +44,53 @@ model Profile {
   id          String   @id @default(cuid())
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id])
-  skills      String[]
-  experience  Json?    // Array of experience objects
-  education   Json?    // Array of education objects
+  headline    String?
+  bio         String?
+  location    String?
+  websiteUrl  String?
   githubUrl   String?
   linkedinUrl String?
-  websiteUrl  String?
   resumeUrl   String?
+  
+  skills      Skill[]
+  experience  Experience[]
+  education   Education[]
+  
+  updatedAt   DateTime @updatedAt
 }
+
+model Experience {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id])
+  company     String
+  position    String
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean  @default(false)
+  description String?
+}
+
+model Education {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     Profile  @relation(fields: [profileId], references: [id])
+  school      String
+  degree      String
+  field       String
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean  @default(false)
+  description String?
+}
+
+model Skill {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  profiles  Profile[]
+}
+
 
 model Company {
   id          String   @id @default(cuid())
