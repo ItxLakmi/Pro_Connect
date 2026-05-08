@@ -26,9 +26,9 @@ We will use a modern full-stack architecture with a clear separation of concerns
 - [x] **Job Board**: Basic job posting and search.
 
 ### Phase 2: Networking
-- [ ] **Follow / Connect**: User connection system.
-- [ ] **Feed System**: Social feed for updates and professional posts.
-- [ ] **Notifications**: Real-time alerts for network activity.
+- [x] **Follow / Connect**: User connection system.
+- [x] **Feed System**: Social feed for updates and professional posts.
+- [x] **Notifications**: Real-time alerts for network activity.
 
 ### Phase 3: Messaging
 - [x] **Real-time Chat**: Socket.io based messaging system.

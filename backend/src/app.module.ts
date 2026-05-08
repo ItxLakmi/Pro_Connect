@@ -10,6 +10,7 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ChatModule } from './chat/chat.module';
+import { NetworkingModule } from './networking/networking.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ChatModule } from './chat/chat.module';
     ApplicationsModule,
     ProjectsModule,
     ChatModule,
+    NetworkingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

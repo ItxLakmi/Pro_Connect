@@ -46,6 +46,14 @@ model User {
   // Messaging
   conversations  Conversation[] @relation("UserConversations")
   messages       Message[]
+
+  // Networking
+  followers      Follow[] @relation("Followers")
+  following      Follow[] @relation("Following")
+  posts          Post[]
+  likes          Like[]
+  comments       Comment[]
+  notifications  Notification[]
 }
 
 model Profile {
@@ -183,4 +191,61 @@ model Message {
   createdAt      DateTime     @default(now())
   isRead         Boolean      @default(false)
 }
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Following", fields: [followerId], references: [id])
+  followingId String
+  following   User     @relation("Followers", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  content   String
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // FOLLOW, LIKE, COMMENT, MESSAGE, BID_RECEIVED, etc.
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  link      String?  
+  createdAt DateTime @default(now())
+}
+
 
