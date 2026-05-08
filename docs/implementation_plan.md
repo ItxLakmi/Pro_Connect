@@ -36,8 +36,8 @@ We will use a modern full-stack architecture with a clear separation of concerns
   - Basic job posting and search.
 
 ### Phase 2: Marketplace & Messaging
-- [ ] Freelance marketplace (Project posting, bidding).
-- [ ] Real-time messaging (Socket.io).
+- [x] Freelance marketplace (Project posting, bidding).
+- [x] Real-time messaging (Socket.io).
 
 ### Phase 3: AI & Verification
 - [ ] AI Job matching engine.

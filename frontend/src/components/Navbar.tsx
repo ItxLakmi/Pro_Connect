@@ -21,8 +21,8 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Jobs', href: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
-    { name: 'Messaging', href: '/messaging', icon: <MessageSquare className="w-5 h-5" /> },
-    { name: 'Notifications', href: '/notifications', icon: <Bell className="w-5 h-5" /> },
+    { name: 'Marketplace', href: '/marketplace', icon: <Zap className="w-5 h-5" /> },
+    { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
   ];
 
   if (['/login', '/register'].includes(pathname)) return null;

@@ -8,6 +8,8 @@ import { UsersModule } from './users/users.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { ProjectsModule } from './projects/projects.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { ApplicationsModule } from './applications/applications.module';
     JobsModule,
     ProfilesModule,
     ApplicationsModule,
+    ProjectsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
