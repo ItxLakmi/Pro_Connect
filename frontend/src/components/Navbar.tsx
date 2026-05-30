@@ -10,21 +10,52 @@ import {
   MessageSquare, 
   User, 
   LogOut,
-  Bell
+  Bell,
+  BookOpen,
+  ShoppingBag,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (user) {
+      api.get('/notifications/unread-count')
+        .then(res => setUnreadCount(res.data.count))
+        .catch(err => console.error(err));
+    }
+  }, [user, pathname]);
 
   const navItems = [
     { name: 'Feed', href: '/feed', icon: <Zap className="w-5 h-5" /> },
     { name: 'Jobs', href: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
-    { name: 'Marketplace', href: '/marketplace', icon: <Zap className="w-5 h-5" /> },
+    { name: 'Marketplace', href: '/marketplace', icon: <ShoppingBag className="w-5 h-5" /> },
+    { name: 'Investors', href: '/investors', icon: <TrendingUp className="w-5 h-5" /> },
+    { name: 'Learning', href: '/learning', icon: <BookOpen className="w-5 h-5" /> },
+    { name: 'Community', href: '/community', icon: <Users className="w-5 h-5" /> },
     { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
-    { name: 'Notifications', href: '/notifications', icon: <Bell className="w-5 h-5" /> },
+    { 
+      name: 'Notifications', 
+      href: '/notifications', 
+      icon: (
+        <div className="relative">
+          <Bell className="w-5 h-5" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
+      ) 
+    },
   ];
 
   if (['/login', '/register'].includes(pathname)) return null;
@@ -69,6 +100,8 @@ export default function Navbar() {
           ))}
 
           <div className="w-px h-6 bg-white/10 mx-2 hidden md:block" />
+          
+          <ThemeToggle />
 
           {user ? (
             <div className="flex items-center gap-4">

@@ -16,7 +16,7 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      const response = await api.get('/networking/notifications');
+      const response = await api.get('/notifications');
       setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -27,10 +27,19 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      await api.post(`/networking/notifications/${id}/read`);
+      await api.patch(`/notifications/${id}/read`);
       setNotifications(notifications.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error('Error marking all as read:', error);
     }
   };
 
@@ -45,13 +54,13 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <main className="max-w-2xl mx-auto px-4 py-24">
         <div className="flex justify-between items-center mb-10">
           <h1 className="text-3xl font-bold">Notifications</h1>
-          <button className="text-sm text-blue-400 hover:underline">Mark all as read</button>
+          <button onClick={markAllAsRead} className="text-sm text-blue-400 hover:underline">Mark all as read</button>
         </div>
 
         <div className="space-y-4">
@@ -69,8 +78,8 @@ export default function NotificationsPage() {
                   transition={{ delay: index * 0.05 }}
                   className={`flex items-start gap-4 p-5 rounded-2xl border transition-all ${
                     notification.isRead 
-                      ? 'bg-[#0a0a0a] border-white/5 opacity-60' 
-                      : 'bg-[#111111] border-blue-500/20 shadow-lg shadow-blue-500/5'
+                      ? 'bg-card border-border opacity-60' 
+                      : 'bg-card border-blue-500/20 shadow-lg shadow-blue-500/5'
                   }`}
                 >
                   <div className={`p-3 rounded-xl bg-white/5 shrink-0`}>
@@ -96,7 +105,7 @@ export default function NotificationsPage() {
               ))}
             </AnimatePresence>
           ) : (
-            <div className="text-center py-20 bg-[#0a0a0a] rounded-3xl border border-white/5">
+            <div className="text-center py-20 bg-card rounded-3xl border border-border shadow-sm">
               <Bell size={48} className="mx-auto text-gray-700 mb-4" />
               <p className="text-gray-500">No new notifications.</p>
             </div>

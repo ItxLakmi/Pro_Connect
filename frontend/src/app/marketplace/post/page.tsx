@@ -33,7 +33,7 @@ export default function PostProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -50,7 +50,7 @@ export default function PostProjectPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-8 md:p-12 shadow-2xl"
+          className="bg-card border border-border rounded-3xl p-8 md:p-12 shadow-sm"
         >
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center">
@@ -73,7 +73,7 @@ export default function PostProjectPage() {
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
                 placeholder="e.g. Build a Modern E-commerce Website"
-                className="w-full bg-[#111111] border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all text-lg"
+                className="w-full bg-background border border-border rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all text-lg"
               />
             </div>
 
@@ -88,7 +88,7 @@ export default function PostProjectPage() {
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 placeholder="Describe the project requirements, deliverables, and timeline..."
-                className="w-full bg-[#111111] border border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all resize-none"
+                className="w-full bg-background border border-border rounded-2xl px-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all resize-none"
               />
             </div>
 
@@ -105,7 +105,7 @@ export default function PostProjectPage() {
                   value={formData.budget}
                   onChange={(e) => setFormData({...formData, budget: e.target.value})}
                   placeholder="500"
-                  className="w-full bg-[#111111] border border-white/10 rounded-2xl pl-10 pr-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all"
+                  className="w-full bg-background border border-border rounded-2xl pl-10 pr-6 py-4 focus:outline-none focus:border-blue-500/50 transition-all"
                 />
               </div>
             </div>

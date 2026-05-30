@@ -6,7 +6,7 @@ import { Send, Search, MoreVertical, Phone, Video, Paperclip, Smile } from 'luci
 import { io, Socket } from 'socket.io-client';
 import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
-import useAuth from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -89,12 +89,12 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#050505] text-white">
+    <div className="h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       
-      <main className="flex-1 overflow-hidden flex max-w-7xl mx-auto w-full border-x border-white/5 bg-[#0a0a0a]">
+      <main className="flex-1 overflow-hidden flex max-w-7xl mx-auto w-full border-x border-border bg-card/30">
         {/* Sidebar */}
-        <div className="w-80 md:w-96 border-r border-white/5 flex flex-col">
+        <div className="w-80 md:w-96 border-r border-border flex flex-col">
           <div className="p-6">
             <h2 className="text-2xl font-bold mb-6">Messages</h2>
             <div className="relative">
@@ -102,7 +102,7 @@ export default function MessagesPage() {
               <input 
                 type="text" 
                 placeholder="Search chats..."
-                className="w-full bg-[#111111] border border-white/5 rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500/30 transition-all"
+                className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-blue-500/30 transition-all"
               />
             </div>
           </div>
@@ -143,9 +143,9 @@ export default function MessagesPage() {
 
         {/* Chat Area */}
         {activeConversation ? (
-          <div className="flex-1 flex flex-col bg-[#050505]">
+          <div className="flex-1 flex flex-col bg-background">
             {/* Chat Header */}
-            <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#0a0a0a]/50 backdrop-blur-xl">
+            <div className="p-4 border-b border-border flex justify-between items-center bg-card/50 backdrop-blur-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center font-bold">
                   {activeConversation.participants.find((p: any) => p.id !== user?.id)?.firstName[0]}
@@ -177,7 +177,7 @@ export default function MessagesPage() {
                     <div className={`max-w-[70%] p-4 rounded-2xl ${
                       msg.senderId === user?.id 
                         ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-[#111111] border border-white/5 text-gray-200 rounded-bl-none'
+                        : 'bg-card border border-border text-foreground/80 rounded-bl-none'
                     }`}>
                       <p className="text-sm leading-relaxed">{msg.content}</p>
                       <span className="text-[10px] opacity-50 block mt-2 text-right">
@@ -191,7 +191,7 @@ export default function MessagesPage() {
             </div>
 
             {/* Input */}
-            <div className="p-6 bg-[#0a0a0a]/50 backdrop-blur-xl border-t border-white/5">
+            <div className="p-6 bg-card/50 backdrop-blur-xl border-t border-border">
               <form onSubmit={sendMessage} className="flex items-center gap-4">
                 <button type="button" className="text-gray-400 hover:text-white transition-colors"><Paperclip size={20} /></button>
                 <div className="flex-1 relative">
@@ -200,7 +200,7 @@ export default function MessagesPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     type="text" 
                     placeholder="Type a message..."
-                    className="w-full bg-[#111111] border border-white/5 rounded-2xl px-6 py-3 focus:outline-none focus:border-blue-500/30 transition-all pr-12"
+                    className="w-full bg-card border border-border rounded-2xl px-6 py-3 focus:outline-none focus:border-blue-500/30 transition-all pr-12"
                   />
                   <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"><Smile size={20} /></button>
                 </div>
@@ -216,7 +216,7 @@ export default function MessagesPage() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-[#050505]">
+          <div className="flex-1 flex items-center justify-center bg-background">
             <div className="text-center">
               <div className="w-20 h-20 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Send size={40} className="text-blue-500 -rotate-12" />

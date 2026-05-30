@@ -85,10 +85,50 @@ export class NetworkingService {
   }
 
   async likePost(userId: string, postId: string) {
-    return this.prisma.like.create({
-      data: { userId, postId },
+    const existing = await this.prisma.like.findUnique({
+      where: { postId_userId: { postId, userId } },
+    });
+    if (existing) {
+      await this.prisma.like.delete({ where: { postId_userId: { postId, userId } } });
+      return { liked: false };
+    }
+    await this.prisma.like.create({ data: { userId, postId } });
+    return { liked: true };
+  }
+
+  async unlikePost(userId: string, postId: string) {
+    return this.prisma.like.deleteMany({ where: { userId, postId } });
+  }
+
+  // --- Comments ---
+
+  async addComment(userId: string, postId: string, content: string) {
+    const comment = await this.prisma.comment.create({
+      data: { authorId: userId, postId, content },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      },
+    });
+    return comment;
+  }
+
+  async getComments(postId: string) {
+    return this.prisma.comment.findMany({
+      where: { postId },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      },
+      orderBy: { createdAt: 'asc' },
     });
   }
+
+  async deleteComment(commentId: string, userId: string) {
+    const comment = await this.prisma.comment.findUnique({ where: { id: commentId } });
+    if (!comment) throw new Error('Comment not found');
+    if (comment.authorId !== userId) throw new Error('Not authorised');
+    return this.prisma.comment.delete({ where: { id: commentId } });
+  }
+
 
   // --- Notifications ---
 
@@ -107,7 +147,7 @@ export class NetworkingService {
   async getNotifications(userId: string) {
     return this.prisma.notification.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { id: 'desc' },
     });
   }
 

@@ -32,6 +32,23 @@ export class JobsController {
   }
 
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  findMyJobs(@Req() req: any) {
+    return this.jobsService.getMyJobs(req.user.userId);
+  }
+
+  @Get('saved')
+  @UseGuards(JwtAuthGuard)
+  findSavedJobs(@Req() req: any) {
+    return this.jobsService.getSavedJobs(req.user.userId);
+  }
+
+  @Post(':id/save')
+  @UseGuards(JwtAuthGuard)
+  toggleSaveJob(@Req() req: any, @Param('id') id: string) {
+    return this.jobsService.toggleSaveJob(req.user.userId, id);
+  }
 
   @Get()
   findAll(
@@ -40,6 +57,7 @@ export class JobsController {
     @Query('search') search?: string,
     @Query('location') location?: string,
     @Query('type') type?: string,
+    @Query('salary') salary?: string,
   ) {
     const where: Prisma.JobWhereInput = {};
     
@@ -56,6 +74,10 @@ export class JobsController {
     
     if (type) {
       where.type = type;
+    }
+
+    if (salary) {
+      where.salaryRange = { contains: salary, mode: 'insensitive' };
     }
 
     return this.jobsService.findAll({

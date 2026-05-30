@@ -38,6 +38,35 @@ export class NetworkingController {
     return this.networkingService.likePost(req.user.userId, id);
   }
 
+  @Post('posts/:id/unlike')
+  @UseGuards(JwtAuthGuard)
+  unlikePost(@Param('id') id: string, @Request() req: any) {
+    return this.networkingService.unlikePost(req.user.userId, id);
+  }
+
+  // --- Comments ---
+  @Post('posts/:id/comments')
+  @UseGuards(JwtAuthGuard)
+  addComment(
+    @Param('id') id: string,
+    @Body('content') content: string,
+    @Request() req: any,
+  ) {
+    return this.networkingService.addComment(req.user.userId, id, content);
+  }
+
+  @Get('posts/:id/comments')
+  @UseGuards(JwtAuthGuard)
+  getComments(@Param('id') id: string) {
+    return this.networkingService.getComments(id);
+  }
+
+  @Delete('posts/comments/:commentId')
+  @UseGuards(JwtAuthGuard)
+  deleteComment(@Param('commentId') commentId: string, @Request() req: any) {
+    return this.networkingService.deleteComment(commentId, req.user.userId);
+  }
+
   // --- Notifications ---
   @Get('notifications')
   @UseGuards(JwtAuthGuard)

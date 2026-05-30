@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Zap, Github, Mail } from 'lucide-react';
+import { Zap, Globe, Mail } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -111,7 +111,7 @@ export default function LoginPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <Button variant="glass" className="w-full gap-2 font-semibold">
-              <Github className="w-4 h-4" /> Github
+              <Globe className="w-4 h-4" /> Github
             </Button>
             <Button variant="glass" className="w-full gap-2 font-semibold">
               <Mail className="w-4 h-4" /> Google

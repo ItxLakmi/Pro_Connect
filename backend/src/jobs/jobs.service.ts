@@ -69,4 +69,56 @@ export class JobsService {
       where: { id },
     });
   }
+
+  async getMyJobs(userId: string): Promise<Job[]> {
+    return this.prisma.job.findMany({
+      where: { postedById: userId },
+      include: {
+        company: true,
+        applications: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async toggleSaveJob(userId: string, jobId: string) {
+    const existing = await this.prisma.savedJob.findUnique({
+      where: {
+        userId_jobId: {
+          userId,
+          jobId,
+        },
+      },
+    });
+
+    if (existing) {
+      await this.prisma.savedJob.delete({
+        where: { id: existing.id },
+      });
+      return { saved: false };
+    } else {
+      await this.prisma.savedJob.create({
+        data: {
+          userId,
+          jobId,
+        },
+      });
+      return { saved: true };
+    }
+  }
+
+  async getSavedJobs(userId: string) {
+    const savedJobs = await this.prisma.savedJob.findMany({
+      where: { userId },
+      include: {
+        job: {
+          include: {
+            company: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return savedJobs.map(sj => sj.job);
+  }
 }

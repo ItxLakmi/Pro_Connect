@@ -18,7 +18,9 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import Navbar from "@/components/Navbar";
+import { CookieBanner } from "@/components/CookieBanner";
 
 export default function RootLayout({
   children,
@@ -28,13 +30,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col pt-16">
-        <AuthProvider>
-          <Navbar />
-          {children}
-        </AuthProvider>
+        <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem>
+          <AuthProvider>
+            <Navbar />
+            {children}
+            <CookieBanner />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

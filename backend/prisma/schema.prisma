@@ -38,6 +38,7 @@ model User {
   applications  Application[]
   company       Company?  @relation(fields: [companyId], references: [id])
   companyId     String?
+  savedJobs     SavedJob[]
 
   // Freelance Marketplace
   postedProjects Project[] @relation("ProjectOwner")
@@ -54,6 +55,130 @@ model User {
   likes          Like[]
   comments       Comment[]
   notifications  Notification[]
+
+  // Learning Platform
+  coursesTeaching Course[] @relation("CourseInstructor")
+  enrollments     Enrollment[]
+  skillAttempts   SkillTestAttempt[]
+  skillBadges     SkillBadge[]
+
+  // Investor Portal
+  startupProfile  StartupProfile?
+  investorProfile InvestorProfile?
+  sentConnections     InvestorConnection[] @relation("SentConnections")
+  receivedConnections InvestorConnection[] @relation("ReceivedConnections")
+
+  // Freelance Reviews
+  reviewsGiven    Review[] @relation("ReviewsGiven")
+  reviewsReceived Review[] @relation("ReviewsReceived")
+
+  // Community & Networking
+  communitiesCreated  Community[]        @relation("CommunityCreator")
+  communityMembers    CommunityMember[]
+  communityPosts      CommunityPost[]
+  communityComments   CommunityComment[]
+  communityPostLikes  CommunityPostLike[]
+
+  // Monetization
+  subscriptions       UserSubscription[]
+}
+
+// ─── Skill Verification ────────────────────────────────────────────────────
+
+model SkillTest {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  skillTag     String
+  timeLimitMin Int      @default(10)
+  passingScore Int      @default(70)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questions SkillTestQuestion[]
+  attempts  SkillTestAttempt[]
+  badges    SkillBadge[]
+}
+
+model SkillTestQuestion {
+  id            String   @id @default(cuid())
+  skillTestId   String
+  skillTest     SkillTest @relation(fields: [skillTestId], references: [id])
+  question      String
+  options       Json     // String[] – 4 options
+  correctIndex  Int      // 0-3
+  order         Int      @default(0)
+}
+
+model SkillTestAttempt {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  skillTestId String
+  skillTest   SkillTest @relation(fields: [skillTestId], references: [id])
+  score       Int       // percentage 0-100
+  passed      Boolean
+  answers     Json      // Int[] – submitted answer indices
+  completedAt DateTime  @default(now())
+}
+
+model SkillBadge {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  skillTestId String
+  skillTest   SkillTest @relation(fields: [skillTestId], references: [id])
+  awardedAt   DateTime  @default(now())
+
+  @@unique([userId, skillTestId])
+}
+
+// ─── Investor Portal ───────────────────────────────────────────────────────
+
+model StartupProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  name          String
+  tagline       String
+  description   String
+  industry      String
+  fundingStage  String   // IDEA, PRE_SEED, SEED, SERIES_A, SERIES_B
+  amountSeeking Float
+  equity        Float
+  pitchDeckUrl  String?
+  website       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connections   InvestorConnection[] @relation("StartupConnections")
+}
+
+model InvestorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  bio             String?
+  investmentFocus Json     // String[] – e.g. ["FinTech", "EdTech"]
+  minTicket       Float
+  maxTicket       Float
+  portfolioUrl    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model InvestorConnection {
+  id        String   @id @default(cuid())
+  fromUserId  String
+  fromUser    User   @relation("SentConnections", fields: [fromUserId], references: [id])
+  toUserId    String
+  toUser      User   @relation("ReceivedConnections", fields: [toUserId], references: [id])
+  startupId   String
+  startup     StartupProfile @relation("StartupConnections", fields: [startupId], references: [id])
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  message     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Profile {
@@ -67,6 +192,9 @@ model Profile {
   githubUrl   String?
   linkedinUrl String?
   resumeUrl   String?
+  
+  isBoosted   Boolean  @default(false)
+  boostedUntil DateTime?
   
   skills      Skill[]
   experience  Experience[]
@@ -130,10 +258,14 @@ model Job {
   postedBy    User     @relation("PostedBy", fields: [postedById], references: [id])
   companyId   String?
   company     Company? @relation(fields: [companyId], references: [id])
+  status      String   @default("APPROVED") // PENDING, APPROVED, REJECTED
+  feePaid     Boolean  @default(false)
+  isPromoted  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   applications Application[]
+  savedBy      SavedJob[]
 }
 
 model Application {
@@ -154,10 +286,14 @@ model Project {
   status      String   @default("OPEN") // OPEN, IN_PROGRESS, COMPLETED, CANCELLED
   postedById  String
   postedBy    User     @relation("ProjectOwner", fields: [postedById], references: [id])
+  platformFee Float?   @default(0) // Commission fee
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   bids        Bid[]
+  milestones  Milestone[]
+  reviews     Review[]
+  conversations Conversation[]
 }
 
 model Bid {
@@ -174,6 +310,8 @@ model Bid {
 
 model Conversation {
   id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -245,7 +383,247 @@ model Notification {
   content   String
   isRead    Boolean  @default(false)
   link      String?  
-  createdAt DateTime @default(now())
 }
 
+// Learning Platform Models
 
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Float?   @default(0)
+  level       String   @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
+  instructorId String
+  instructor  User     @relation("CourseInstructor", fields: [instructorId], references: [id])
+  status      String   @default("APPROVED") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments Enrollment[]
+  modules     CourseModule[]
+  learningPaths LearningPathCourse[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  status    String   @default("ENROLLED") // ENROLLED, IN_PROGRESS, COMPLETED
+  progress  Float    @default(0) // Percentage 0-100
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  moduleProgress ModuleProgress[]
+
+  @@unique([userId, courseId])
+}
+
+model CourseModule {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  title       String
+  description String?
+  videoUrl    String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  progress    ModuleProgress[]
+}
+
+model ModuleProgress {
+  id           String       @id @default(cuid())
+  enrollmentId String
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id])
+  moduleId     String
+  module       CourseModule @relation(fields: [moduleId], references: [id])
+  completed    Boolean      @default(false)
+  completedAt  DateTime?
+
+  @@unique([enrollmentId, moduleId])
+}
+
+model LearningPath {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  skillTag    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  courses     LearningPathCourse[]
+}
+
+model LearningPathCourse {
+  id             String       @id @default(cuid())
+  learningPathId String
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id])
+  courseId       String
+  course         Course       @relation(fields: [courseId], references: [id])
+  order          Int          @default(0)
+
+  @@unique([learningPathId, courseId])
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+}
+
+// ─── Community & Networking ─────────────────────────────────────────────────
+
+enum CommunityType {
+  INDUSTRY
+  UNIVERSITY
+  WOMEN_PROFESSIONAL
+  TECH
+}
+
+enum CommunityMemberRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+model Community {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String
+  type        CommunityType
+  category    String        // e.g. "FinTech", "MIT", "Python"
+  coverImage  String?
+  isPrivate   Boolean       @default(false)
+  creatorId   String
+  creator     User          @relation("CommunityCreator", fields: [creatorId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members     CommunityMember[]
+  posts       CommunityPost[]
+}
+
+model CommunityMember {
+  id          String              @id @default(cuid())
+  communityId String
+  community   Community           @relation(fields: [communityId], references: [id])
+  userId      String
+  user        User                @relation(fields: [userId], references: [id])
+  role        CommunityMemberRole @default(MEMBER)
+  joinedAt    DateTime            @default(now())
+
+  @@unique([communityId, userId])
+}
+
+model CommunityPost {
+  id          String             @id @default(cuid())
+  communityId String
+  community   Community          @relation(fields: [communityId], references: [id])
+  authorId    String
+  author      User               @relation(fields: [authorId], references: [id])
+  content     String
+  isPinned    Boolean            @default(false)
+  isRemoved   Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  comments    CommunityComment[]
+  likes       CommunityPostLike[]
+}
+
+model CommunityComment {
+  id        String        @id @default(cuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id])
+  content   String
+  isRemoved Boolean       @default(false)
+  createdAt DateTime      @default(now())
+}
+
+model CommunityPostLike {
+  id        String        @id @default(cuid())
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  createdAt DateTime      @default(now())
+
+  @@unique([postId, userId])
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  title       String
+  description String?
+  amount      Float
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, PAID
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  reviewerId  String
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating      Int      // 1 to 5
+  comment     String?
+  createdAt   DateTime @default(now())
+}
+
+model Advertisement {
+  id          String   @id @default(cuid())
+  title       String
+  imageUrl    String
+  targetUrl   String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Monetization ──────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "PREMIUM", "RECRUITER_PRO"
+  price       Float
+  billingCycle String  @default("MONTHLY") // MONTHLY, YEARLY
+  features    Json     // Array of strings detailing plan features
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions UserSubscription[]
+}
+
+model UserSubscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  planId      String
+  plan        SubscriptionPlan @relation(fields: [planId], references: [id])
+  status      String   @default("ACTIVE") // ACTIVE, CANCELED, EXPIRED
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, planId])
+}

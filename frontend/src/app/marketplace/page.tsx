@@ -2,23 +2,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase, DollarSign, Clock, Users, Search, Filter, Plus } from 'lucide-react';
+import { Briefcase, DollarSign, Clock, Users, Search, Filter, Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function MarketplacePage() {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'all' | 'recommended'>('all');
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [activeTab]);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/projects');
-      setProjects(response.data);
+      if (activeTab === 'recommended') {
+        const response = await api.get('/ai/recommend-projects');
+        setProjects(response.data);
+      } else {
+        const response = await api.get('/projects');
+        setProjects(response.data);
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -27,7 +36,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -58,7 +67,7 @@ export default function MarketplacePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Filters Sidebar */}
           <aside className="lg:col-span-1 space-y-6">
-            <div className="bg-[#111111] border border-white/5 rounded-2xl p-6">
+            <div className="bg-card/50 border border-border rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Filter size={18} className="text-blue-400" />
                 Filters
@@ -66,7 +75,7 @@ export default function MarketplacePage() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm text-gray-400 block mb-2">Category</label>
-                  <select className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500/50">
+                  <select className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500/50">
                     <option>All Categories</option>
                     <option>Web Development</option>
                     <option>Design</option>
@@ -88,8 +97,29 @@ export default function MarketplacePage() {
               <input 
                 type="text" 
                 placeholder="Search projects by title, skills, or keywords..."
-                className="w-full bg-[#111111] border border-white/5 rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:border-blue-500/30 transition-all text-lg"
+                className="w-full bg-card/50 border border-border rounded-2xl pl-12 pr-6 py-4 focus:outline-none focus:border-blue-500/30 transition-all text-lg"
               />
+            </div>
+
+            {/* AI Recommendation Tabs */}
+            <div className="flex gap-4 p-1 bg-card/50 border border-border rounded-xl w-fit">
+              <button 
+                onClick={() => setActiveTab('all')}
+                className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeTab === 'all' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-foreground'
+                }`}
+              >
+                All Projects
+              </button>
+              <button 
+                onClick={() => setActiveTab('recommended')}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  activeTab === 'recommended' ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-md' : 'text-gray-500 hover:text-foreground'
+                }`}
+              >
+                <Sparkles size={16} />
+                Recommended for You
+              </button>
             </div>
 
             {loading ? (
@@ -103,11 +133,19 @@ export default function MarketplacePage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-[#111111] border border-white/5 rounded-2xl p-6 hover:border-blue-500/30 transition-all group"
+                  className="bg-card/50 border border-border rounded-2xl p-6 hover:border-blue-500/30 transition-all group shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors">{project.title}</h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors">{project.title}</h3>
+                        {project.matchScore && (
+                          <span className="px-2.5 py-1 bg-purple-500/20 text-purple-400 text-xs font-bold rounded-full border border-purple-500/30 flex items-center gap-1">
+                            <Sparkles size={12} />
+                            {project.matchScore}% Match
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
                         <span className="flex items-center gap-1">
                           <DollarSign size={14} />
@@ -127,7 +165,7 @@ export default function MarketplacePage() {
                   <p className="text-gray-400 line-clamp-2 mb-6">
                     {project.description}
                   </p>
-                  <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-center pt-4 border-t border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
                         {project.postedBy.firstName[0]}
@@ -143,7 +181,7 @@ export default function MarketplacePage() {
                 </motion.div>
               ))
             ) : (
-              <div className="text-center py-20 bg-[#111111] rounded-2xl border border-white/5">
+              <div className="text-center py-20 bg-card/50 rounded-2xl border border-border shadow-sm">
                 <Briefcase size={48} className="mx-auto text-gray-600 mb-4" />
                 <p className="text-gray-400 text-lg">No projects found. Be the first to post one!</p>
               </div>

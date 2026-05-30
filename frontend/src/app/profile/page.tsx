@@ -14,7 +14,8 @@ import {
   Wrench,
   Terminal,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Award
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
@@ -25,15 +26,20 @@ import api from '@/lib/api';
 export default function ProfilePage() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [badges, setBadges] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.get('/profiles/me');
-        setProfile(response.data);
+        const [profileRes, badgesRes] = await Promise.all([
+          api.get('/profiles/me'),
+          api.get('/learning/my-badges')
+        ]);
+        setProfile(profileRes.data);
+        setBadges(badgesRes.data);
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching profile data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -71,7 +77,7 @@ export default function ProfilePage() {
               <p className="text-foreground/70 text-lg font-medium">{profile?.headline || 'Professional at ProConnect'}</p>
               <div className="flex items-center gap-4 mt-2 text-sm text-foreground/50">
                 <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {profile?.location || 'Remote'}</span>
-                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> Joined {new Date(user?.createdAt || Date.now()).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> Joined {new Date((user as any)?.createdAt || Date.now()).toLocaleDateString()}</span>
               </div>
             </div>
             <Button variant="glass" className="mb-2 gap-2">
@@ -178,6 +184,30 @@ export default function ProfilePage() {
 
         {/* Right Column: Skills & Stats */}
         <div className="space-y-8">
+          {/* Verified Badges */}
+          <Card className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2"><Award className="w-5 h-5 text-accent" /> Verified Badges</h2>
+            </div>
+            <div className="flex flex-col gap-3">
+              {badges?.length > 0 ? (
+                badges.map((badge: any) => (
+                  <div key={badge.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20 shrink-0">
+                      <Award className="w-5 h-5 text-accent" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm leading-none mb-1">{badge.skillTest?.skillTag}</p>
+                      <p className="text-xs text-foreground/50">Verified by ProConnect</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-foreground/40 text-sm italic">No badges earned yet.</p>
+              )}
+            </div>
+          </Card>
+
           <Card className="p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2"><Wrench className="w-5 h-5 text-accent" /> Skills</h2>

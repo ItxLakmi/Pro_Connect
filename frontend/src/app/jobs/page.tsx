@@ -10,7 +10,8 @@ import {
   DollarSign, 
   Filter,
   ChevronRight,
-  Zap
+  Zap,
+  Bookmark
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import api from '@/lib/api';
@@ -20,6 +21,9 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [location, setLocation] = useState('');
+  const [type, setType] = useState('');
+  const [salary, setSalary] = useState('');
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
 
   useEffect(() => {
     fetchJobs();
@@ -29,9 +33,14 @@ export default function JobsPage() {
     try {
       setLoading(true);
       const res = await api.get('/jobs', {
-        params: { search, location }
+        params: { search, location, type, salary }
       });
       setJobs(res.data);
+      
+      try {
+        const savedRes = await api.get('/jobs/saved');
+        setSavedJobs(savedRes.data.map((j: any) => j.id));
+      } catch(e) {}
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
@@ -42,6 +51,23 @@ export default function JobsPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchJobs();
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [type, salary]);
+
+  const handleSaveJob = async (jobId: string) => {
+    try {
+      const res = await api.post(`/jobs/${jobId}/save`);
+      if (res.data.saved) {
+        setSavedJobs(prev => [...prev, jobId]);
+      } else {
+        setSavedJobs(prev => prev.filter(id => id !== jobId));
+      }
+    } catch (error) {
+      console.error('Error saving job:', error);
+    }
   };
 
   const handleApply = async (jobId: string) => {
@@ -143,6 +169,14 @@ export default function JobsPage() {
                         </div>
                       </div>
                       <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => handleSaveJob(job.id)}
+                        className={`mr-2 rounded-xl transition-all ${savedJobs.includes(job.id) ? 'bg-accent/20 text-accent hover:bg-accent/30' : 'text-foreground/40 hover:text-foreground hover:bg-white/10'}`}
+                      >
+                        <Bookmark className="w-5 h-5" fill={savedJobs.includes(job.id) ? 'currentColor' : 'none'} />
+                      </Button>
+                      <Button 
                         size="sm" 
                         variant="glass" 
                         className="bg-accent/10 hover:bg-accent hover:text-white border-accent/20"
@@ -176,13 +210,31 @@ export default function JobsPage() {
                 <div>
                   <label className="text-xs font-bold text-foreground/40 uppercase tracking-widest mb-2 block">Job Type</label>
                   <div className="space-y-2">
-                    {['Full-time', 'Contract', 'Remote', 'Freelance'].map((type) => (
-                      <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                        <input type="checkbox" className="w-4 h-4 rounded border-white/10 bg-white/5 text-accent focus:ring-accent" />
-                        <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors">{type}</span>
+                    {['', 'Full-time', 'Contract', 'Remote', 'Freelance'].map((t) => (
+                      <label key={t || 'all'} className="flex items-center gap-3 cursor-pointer group">
+                        <input 
+                          type="radio" 
+                          name="jobType"
+                          checked={type === t}
+                          onChange={() => setType(t)}
+                          className="w-4 h-4 rounded-full border-white/10 bg-white/5 text-accent focus:ring-accent" 
+                        />
+                        <span className="text-sm text-foreground/60 group-hover:text-foreground transition-colors">{t || 'All Types'}</span>
                       </label>
                     ))}
                   </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5">
+                  <label className="text-xs font-bold text-foreground/40 uppercase tracking-widest mb-2 block">Salary Range</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. $5000" 
+                    className="w-full h-10 bg-white/5 border border-white/10 rounded-lg px-3 text-sm focus:outline-none focus:border-accent/50"
+                    value={salary}
+                    onChange={(e) => setSalary(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchJobs()}
+                  />
                 </div>
               </div>
             </div>

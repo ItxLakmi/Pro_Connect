@@ -89,4 +89,69 @@ export class ProjectsService {
       },
     });
   }
+
+  // --- Phase 3.6 Milestone & Payment Logic ---
+
+  async createMilestone(data: {
+    projectId: string;
+    title: string;
+    description?: string;
+    amount: number;
+    dueDate?: Date;
+  }) {
+    return this.prisma.milestone.create({
+      data,
+    });
+  }
+
+  async getMilestones(projectId: string) {
+    return this.prisma.milestone.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async updateMilestoneStatus(id: string, status: string) {
+    const milestone = await this.prisma.milestone.update({
+      where: { id },
+      data: { status },
+      include: { project: true },
+    });
+
+    if (status === 'PAID') {
+      const commission = milestone.amount * 0.10; // 10% fee
+      await this.prisma.project.update({
+        where: { id: milestone.projectId },
+        data: {
+          platformFee: { increment: commission },
+        },
+      });
+    }
+
+    return milestone;
+  }
+
+  // --- Phase 3.6 Review System Logic ---
+
+  async createReview(data: {
+    projectId: string;
+    reviewerId: string;
+    revieweeId: string;
+    rating: number;
+    comment?: string;
+  }) {
+    return this.prisma.review.create({
+      data,
+    });
+  }
+
+  async getProjectReviews(projectId: string) {
+    return this.prisma.review.findMany({
+      where: { projectId },
+      include: {
+        reviewer: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+        reviewee: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      },
+    });
+  }
 }
