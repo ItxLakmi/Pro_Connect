@@ -30,7 +30,7 @@ export class NotificationsService {
   async getUserNotifications(userId: string) {
     return this.prisma.notification.findMany({
       where: { userId },
-      orderBy: { id: 'desc' }, // or add createdAt if we update schema, id desc is a fallback
+      orderBy: { createdAt: 'desc' },
     });
   }
 

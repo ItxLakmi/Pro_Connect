@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Job } from '@prisma/client';
 
@@ -9,6 +9,7 @@ export class JobsService {
   async create(data: Prisma.JobCreateInput): Promise<Job> {
     return this.prisma.job.create({
       data,
+      include: { company: true },
     });
   }
 
@@ -29,13 +30,9 @@ export class JobsService {
       include: {
         company: true,
         postedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+          select: { id: true, firstName: true, lastName: true, email: true },
         },
+        _count: { select: { applications: true } },
       },
     });
   }
@@ -46,13 +43,10 @@ export class JobsService {
       include: {
         company: true,
         postedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          select: { id: true, firstName: true, lastName: true },
         },
         applications: true,
+        _count: { select: { applications: true } },
       },
     });
   }
@@ -61,6 +55,7 @@ export class JobsService {
     return this.prisma.job.update({
       data,
       where: { id },
+      include: { company: true },
     });
   }
 
@@ -70,39 +65,40 @@ export class JobsService {
     });
   }
 
-  async getMyJobs(userId: string): Promise<Job[]> {
+  async getMyJobs(userId: string) {
     return this.prisma.job.findMany({
       where: { postedById: userId },
       include: {
         company: true,
-        applications: true,
+        _count: { select: { applications: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
+  async closeJob(id: string, userId: string) {
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.postedById !== userId) throw new ForbiddenException('Not your job');
+    return this.prisma.job.update({ where: { id }, data: { status: 'CLOSED' } });
+  }
+
+  async reopenJob(id: string, userId: string) {
+    const job = await this.prisma.job.findUnique({ where: { id } });
+    if (!job) throw new NotFoundException('Job not found');
+    if (job.postedById !== userId) throw new ForbiddenException('Not your job');
+    return this.prisma.job.update({ where: { id }, data: { status: 'APPROVED' } });
+  }
+
   async toggleSaveJob(userId: string, jobId: string) {
     const existing = await this.prisma.savedJob.findUnique({
-      where: {
-        userId_jobId: {
-          userId,
-          jobId,
-        },
-      },
+      where: { userId_jobId: { userId, jobId } },
     });
-
     if (existing) {
-      await this.prisma.savedJob.delete({
-        where: { id: existing.id },
-      });
+      await this.prisma.savedJob.delete({ where: { id: existing.id } });
       return { saved: false };
     } else {
-      await this.prisma.savedJob.create({
-        data: {
-          userId,
-          jobId,
-        },
-      });
+      await this.prisma.savedJob.create({ data: { userId, jobId } });
       return { saved: true };
     }
   }
@@ -110,13 +106,7 @@ export class JobsService {
   async getSavedJobs(userId: string) {
     const savedJobs = await this.prisma.savedJob.findMany({
       where: { userId },
-      include: {
-        job: {
-          include: {
-            company: true,
-          },
-        },
-      },
+      include: { job: { include: { company: true } } },
       orderBy: { createdAt: 'desc' },
     });
     return savedJobs.map(sj => sj.job);

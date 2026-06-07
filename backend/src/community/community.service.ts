@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCommunityDto } from './dto/create-community.dto';
 
@@ -16,6 +16,15 @@ export class CommunityService {
   }
 
   // ─── List communities ─────────────────────────────────────────────────────
+  async getUserCommunities(userId: string) {
+    const memberships = await this.prisma.communityMember.findMany({
+      where: { userId },
+      include: { community: { include: { _count: { select: { members: true } } } } },
+      orderBy: { joinedAt: 'desc' }
+    });
+    return memberships.map(m => m.community);
+  }
+
   async findAll(type?: string, search?: string) {
     return this.prisma.community.findMany({
       where: {
@@ -197,5 +206,35 @@ export class CommunityService {
       throw new ForbiddenException('Not authorised to remove this comment');
     }
     return this.prisma.communityComment.update({ where: { id: commentId }, data: { isRemoved: true } });
+  }
+
+  // ─── Delete Community (Admin only) ───────────────────────────────────────
+  async deleteCommunity(communityId: string, requesterId: string) {
+    const community = await this.prisma.community.findUnique({ where: { id: communityId } });
+    if (!community) throw new NotFoundException('Community not found');
+
+    const member = await this.prisma.communityMember.findUnique({
+      where: { communityId_userId: { communityId, userId: requesterId } },
+    });
+    if (!member || member.role !== 'ADMIN') {
+      throw new ForbiddenException('Only the community admin can delete this community');
+    }
+
+    // Cascade delete: comments → likes → posts → members → community
+    const postIds = (await this.prisma.communityPost.findMany({
+      where: { communityId },
+      select: { id: true },
+    })).map((p) => p.id);
+
+    if (postIds.length > 0) {
+      await this.prisma.communityComment.deleteMany({ where: { postId: { in: postIds } } });
+      await this.prisma.communityPostLike.deleteMany({ where: { postId: { in: postIds } } });
+      await this.prisma.communityPost.deleteMany({ where: { communityId } });
+    }
+
+    await this.prisma.communityMember.deleteMany({ where: { communityId } });
+    await this.prisma.community.delete({ where: { id: communityId } });
+
+    return { message: 'Community deleted successfully' };
   }
 }

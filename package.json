@@ -6,6 +6,7 @@
     "backend"
   ],
   "scripts": {
+    "dev": "start cmd /k \"cd backend && npm run start:dev\" && start cmd /k \"cd frontend && npm run dev\"",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:backend": "npm run start:dev --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",

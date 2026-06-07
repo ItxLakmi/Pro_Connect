@@ -15,10 +15,15 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import api from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function LearningPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [courses, setCourses] = useState<any[]>([]);
   const [learningPaths, setLearningPaths] = useState<any[]>([]);
+  const [myEnrollments, setMyEnrollments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -29,11 +34,13 @@ export default function LearningPage() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const [res, pathsRes] = await Promise.all([
+      const [res, pathsRes, enrollmentsRes] = await Promise.all([
         api.get('/learning/courses'),
-        api.get('/learning/paths').catch(() => ({ data: [] }))
+        api.get('/learning/paths').catch(() => ({ data: [] })),
+        api.get('/learning/my-enrollments').catch(() => ({ data: [] }))
       ]);
       setLearningPaths(pathsRes.data);
+      setMyEnrollments(enrollmentsRes.data);
       // For MVP, if search is typed, we just filter client side
       if (search) {
         setCourses(res.data.filter((c: any) => c.title.toLowerCase().includes(search.toLowerCase())));
@@ -56,6 +63,8 @@ export default function LearningPage() {
     try {
       await api.post(`/learning/enroll`, { courseId });
       alert('Successfully enrolled!');
+      const enrollRes = await api.get('/learning/my-enrollments').catch(() => ({ data: [] }));
+      setMyEnrollments(enrollRes.data);
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to enroll');
     }
@@ -160,29 +169,61 @@ export default function LearningPage() {
                         {course.description}
                       </p>
                       
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="w-6 h-6 rounded-full bg-white/10 overflow-hidden shrink-0">
-                           {course.instructor?.avatar && (
-                             <img src={course.instructor.avatar} alt="Instructor" className="w-full h-full object-cover" />
-                           )}
+                      <Link href={`/profile/${course.instructor?.id || course.instructorId}`}>
+                        <div className="flex items-center gap-2 mb-4 group/instructor cursor-pointer">
+                          <div className="w-6 h-6 rounded-full bg-accent/15 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-bold text-accent border border-accent/20 group-hover/instructor:border-accent/40 transition-all">
+                             {course.instructor?.avatar ? (
+                               <img src={course.instructor.avatar} alt="Instructor" className="w-full h-full object-cover" />
+                             ) : (
+                               course.instructor?.firstName?.[0] || '?'
+                             )}
+                          </div>
+                          <span className="text-xs font-medium text-foreground/80 group-hover/instructor:text-accent transition-colors">
+                            {course.instructor?.firstName} {course.instructor?.lastName}
+                          </span>
                         </div>
-                        <span className="text-xs font-medium text-foreground/80">
-                          {course.instructor?.firstName} {course.instructor?.lastName}
-                        </span>
-                      </div>
+                      </Link>
 
                       <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
                         <div className="font-bold text-lg">
                           {course.price > 0 ? `$${course.price}` : 'Free'}
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="glass" 
-                          className="bg-accent/10 hover:bg-accent hover:text-white border-accent/20 gap-2"
-                          onClick={() => handleEnroll(course.id)}
-                        >
-                          Enroll <Play className="w-3 h-3 fill-current" />
-                        </Button>
+                        {user && course.instructorId === user.id ? (
+                          <Button 
+                            size="sm" 
+                            variant="glass" 
+                            className="bg-amber-500/10 hover:bg-amber-500 hover:text-black border-amber-500/20 text-amber-400 gap-2 font-bold"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/learning/${course.id}`);
+                            }}
+                          >
+                            Manage <ChevronRight className="w-3.5 h-3.5" />
+                          </Button>
+                        ) : myEnrollments.some((e: any) => e.courseId === course.id) ? (
+                          <Button 
+                            size="sm" 
+                            variant="glass" 
+                            className="bg-accent/10 hover:bg-accent hover:text-white border-accent/20 text-accent gap-2 font-bold"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/learning/${course.id}`);
+                            }}
+                          >
+                            Resume <Play className="w-3 h-3 fill-current" />
+                          </Button>
+                        ) : (
+                          <Button 
+                            size="sm" 
+                            variant="glass" 
+                            className="bg-accent/10 hover:bg-accent hover:text-white border-accent/20 gap-2"
+                            onClick={() => handleEnroll(course.id)}
+                          >
+                            Enroll <Play className="w-3 h-3 fill-current" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

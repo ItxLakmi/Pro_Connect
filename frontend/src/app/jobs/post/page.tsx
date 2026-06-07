@@ -18,6 +18,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { LocationCombobox } from '@/components/ui/LocationCombobox';
 import api from '@/lib/api';
 
 const jobSchema = z.object({
@@ -78,7 +79,7 @@ export default function PostJobPage() {
           <p className="text-foreground/60">Fill in the details below to reach thousands of top-tier professionals.</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 overflow-visible">
           <Card className="p-8 space-y-6">
             <div className="grid gap-6">
               <Input
@@ -93,7 +94,7 @@ export default function PostJobPage() {
                   <label className="text-sm font-bold text-foreground/70 ml-1">Job Type</label>
                   <select 
                     {...register('type')}
-                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent/50 transition-all appearance-none cursor-pointer"
+                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm focus:outline-none focus:border-accent/50 transition-all appearance-none cursor-pointer relative z-10"
                   >
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
@@ -104,9 +105,9 @@ export default function PostJobPage() {
                   {errors.type?.message && <p className="text-xs text-red-400 mt-1">{errors.type.message}</p>}
                 </div>
 
-                <Input
+                <LocationCombobox
                   label="Location"
-                  placeholder="Colombo, Sri Lanka or Remote"
+                  placeholder="Select or type a location..."
                   {...register('location')}
                   error={errors.location?.message}
                 />

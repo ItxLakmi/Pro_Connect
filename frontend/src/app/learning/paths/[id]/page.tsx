@@ -98,16 +98,22 @@ export default function LearningPathPage() {
                   </p>
                   
                   <div className="flex items-center justify-between mt-auto">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-white/10 overflow-hidden shrink-0">
-                        {course.instructor?.avatar && (
-                          <img src={course.instructor.avatar} alt="Instructor" className="w-full h-full object-cover" />
-                        )}
+                    <Link href={`/profile/${course.instructor?.id || course.instructorId}`}>
+                      <div className="flex items-center gap-2 group/instructor cursor-pointer">
+                        <div className="w-6 h-6 rounded-full bg-white/10 overflow-hidden shrink-0 hover:opacity-90 transition-opacity">
+                          {course.instructor?.avatar ? (
+                            <img src={course.instructor.avatar} alt="Instructor" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-white/5 flex items-center justify-center font-bold text-[8px]">
+                              {course.instructor?.firstName?.[0] || '?'}
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-foreground/80 group-hover/instructor:text-accent transition-colors">
+                          {course.instructor?.firstName} {course.instructor?.lastName}
+                        </span>
                       </div>
-                      <span className="text-xs font-medium text-foreground/80">
-                        {course.instructor?.firstName} {course.instructor?.lastName}
-                      </span>
-                    </div>
+                    </Link>
                     <Link href={`/learning/${course.id}`}>
                       <Button size="sm" variant="glass" className="bg-white/5 hover:bg-white/10 gap-2">
                         Start <Play className="w-3 h-3 fill-current" />

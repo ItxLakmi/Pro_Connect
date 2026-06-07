@@ -44,4 +44,23 @@ export class UsersService {
       data: { avatar: avatarUrl },
     });
   }
+
+  async findByEmailVerificationToken(token: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { emailVerificationToken: token },
+    });
+  }
+
+  async findByResetPasswordToken(token: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: { resetPasswordToken: token },
+    });
+  }
+
+  async update(userId: string, data: Prisma.UserUpdateInput): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+  }
 }

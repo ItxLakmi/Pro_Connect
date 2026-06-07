@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Users, Heart, MessageCircle, Send, MoreVertical,
   Lock, Globe, Shield, Crown, Trash2, Pin, TrendingUp,
-  GraduationCap, Cpu, LogOut,
+  GraduationCap, Cpu, LogOut, AlertTriangle,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -98,11 +98,15 @@ function PostCard({
         {/* Author row */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold text-sm shrink-0">
-              {post.author?.firstName?.[0] || '?'}
-            </div>
+            <Link href={`/profile/${post.author?.id}`}>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold text-sm shrink-0 hover:opacity-90 transition-opacity">
+                {post.author?.firstName?.[0] || '?'}
+              </div>
+            </Link>
             <div>
-              <p className="font-bold text-sm">{post.author?.firstName} {post.author?.lastName}</p>
+              <Link href={`/profile/${post.author?.id}`}>
+                <p className="font-bold text-sm hover:text-blue-400 transition-colors">{post.author?.firstName} {post.author?.lastName}</p>
+              </Link>
               <p className="text-xs text-gray-500">{new Date(post.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
@@ -171,12 +175,16 @@ function PostCard({
               <div className="mt-4 pt-4 border-t border-white/5 space-y-3">
                 {comments.map((comment) => (
                   <div key={comment.id} className="flex gap-3 group">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold shrink-0">
-                      {comment.author?.firstName?.[0] || '?'}
-                    </div>
+                    <Link href={`/profile/${comment.author?.id}`}>
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-bold shrink-0 hover:opacity-90 transition-opacity">
+                        {comment.author?.firstName?.[0] || '?'}
+                      </div>
+                    </Link>
                     <div className="flex-1 bg-background rounded-xl px-3 py-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold">{comment.author?.firstName} {comment.author?.lastName}</span>
+                        <Link href={`/profile/${comment.author?.id}`}>
+                          <span className="text-xs font-bold hover:text-blue-400 transition-colors">{comment.author?.firstName} {comment.author?.lastName}</span>
+                        </Link>
                         {(canModerate || comment.author?.id === myId) && (
                           <button
                             onClick={() => handleRemoveComment(comment.id)}
@@ -231,6 +239,8 @@ export default function CommunityDetailPage() {
   const [posting, setPosting] = useState(false);
   const [joining, setJoining] = useState(false);
   const [activeTab, setActiveTab] = useState<'posts' | 'members'>('posts');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const myMembership = community?.members?.[0];
   const myRole: string | null = myMembership?.role || null;
@@ -298,6 +308,18 @@ export default function CommunityDetailPage() {
     } catch (err) { console.error(err); }
   };
 
+  const handleDeleteCommunity = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/community/${communityId}`);
+      router.push('/community');
+    } catch (err) {
+      console.error(err);
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -350,6 +372,16 @@ export default function CommunityDetailPage() {
               <div className="font-bold text-xl text-white">{community._count?.members || 0}</div>
               <div className="text-xs">members</div>
             </div>
+            {myRole === 'ADMIN' && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowDeleteModal(true)}
+                className="flex items-center gap-2 bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-300 hover:bg-red-500/40 hover:text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all"
+              >
+                <Trash2 size={14} /> Delete
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -477,13 +509,15 @@ export default function CommunityDetailPage() {
                 <h3 className="font-bold mb-3 text-sm uppercase tracking-wider text-gray-400">Members</h3>
                 <div className="space-y-3">
                   {members.slice(0, 5).map((m) => (
-                    <div key={m.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold shrink-0">
-                        {m.user?.firstName?.[0] || '?'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{m.user?.firstName} {m.user?.lastName}</p>
-                      </div>
+                    <div key={m.id} className="flex items-center gap-3 w-full">
+                      <Link href={`/profile/${m.user?.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold shrink-0 hover:opacity-90 transition-opacity">
+                          {m.user?.firstName?.[0] || '?'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate hover:text-blue-400 transition-colors">{m.user?.firstName} {m.user?.lastName}</p>
+                        </div>
+                      </Link>
                       <span className={`text-xs px-1.5 py-0.5 rounded-md border flex items-center gap-1 ${ROLE_BADGE[m.role]?.cls}`}>
                         {ROLE_BADGE[m.role]?.icon}
                         {m.role === 'ADMIN' ? 'Admin' : m.role === 'MODERATOR' ? 'Mod' : ''}
@@ -511,13 +545,15 @@ export default function CommunityDetailPage() {
                 transition={{ delay: index * 0.03 }}
                 className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shrink-0">
-                  {m.user?.firstName?.[0] || '?'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold truncate">{m.user?.firstName} {m.user?.lastName}</p>
-                  <p className="text-xs text-gray-500">Joined {new Date(m.joinedAt).toLocaleDateString()}</p>
-                </div>
+                <Link href={`/profile/${m.user?.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center font-bold shrink-0 hover:opacity-90 transition-opacity">
+                    {m.user?.firstName?.[0] || '?'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate hover:text-blue-400 transition-colors">{m.user?.firstName} {m.user?.lastName}</p>
+                    <p className="text-xs text-gray-500">Joined {new Date(m.joinedAt).toLocaleDateString()}</p>
+                  </div>
+                </Link>
 
                 {/* Moderation: role change */}
                 {(myRole === 'ADMIN' || myRole === 'MODERATOR') && m.user?.id !== user?.id ? (
@@ -540,6 +576,84 @@ export default function CommunityDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Community Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !deleting && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-red-500/30 rounded-3xl p-8 w-full max-w-md shadow-2xl shadow-red-500/10"
+            >
+              {/* Warning Icon */}
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-red-500/15 border border-red-500/30 mx-auto mb-6">
+                <AlertTriangle size={32} className="text-red-400" />
+              </div>
+
+              <h2 className="text-2xl font-black text-center mb-2 text-white">
+                Delete Community?
+              </h2>
+              <p className="text-gray-400 text-center text-sm mb-2">
+                You are about to permanently delete
+              </p>
+              <p className="text-center font-bold text-white mb-6">&ldquo;{community.name}&rdquo;</p>
+
+              {/* What will be deleted */}
+              <div className="bg-red-500/8 border border-red-500/20 rounded-2xl p-4 mb-6 space-y-2">
+                <p className="text-xs font-bold text-red-400 uppercase tracking-wider mb-3">This will permanently delete:</p>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  All {community._count?.posts || 0} posts and their comments
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  All {community._count?.members || 0} member records
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  The community and all its data
+                </div>
+              </div>
+
+              <p className="text-xs text-red-400/70 text-center mb-6 font-medium">
+                ⚠️ This action cannot be undone.
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 bg-background border border-border rounded-xl py-3 font-bold hover:border-white/20 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <motion.button
+                  whileHover={{ scale: deleting ? 1 : 1.02 }}
+                  whileTap={{ scale: deleting ? 1 : 0.98 }}
+                  onClick={handleDeleteCommunity}
+                  disabled={deleting}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 rounded-xl py-3 font-bold transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                >
+                  {deleting ? (
+                    <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Deleting...</>
+                  ) : (
+                    <><Trash2 size={16} /> Delete Forever</>
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

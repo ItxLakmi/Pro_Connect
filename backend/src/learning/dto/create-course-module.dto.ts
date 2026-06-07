@@ -12,6 +12,10 @@ export class CreateCourseModuleDto {
   @IsOptional()
   videoUrl?: string;
 
+  @IsString()
+  @IsOptional()
+  notesUrl?: string;
+
   @IsNumber()
   @IsOptional()
   order?: number;

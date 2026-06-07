@@ -113,8 +113,24 @@ export class ChatService {
       whereClause.projectId = projectId;
     }
 
+    const includeOptions = {
+      participants: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+        },
+      },
+      messages: {
+        take: 1,
+        orderBy: { createdAt: 'desc' as const },
+      },
+    };
+
     const conversation = await this.prisma.conversation.findFirst({
       where: whereClause,
+      include: includeOptions,
     });
 
     if (conversation) return conversation;
@@ -126,6 +142,7 @@ export class ChatService {
           connect: participantIds.map((id) => ({ id })),
         },
       },
+      include: includeOptions,
     });
   }
 }

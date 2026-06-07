@@ -15,7 +15,7 @@ export class LearningController {
 
   @Post('courses')
   createCourse(@Request() req, @Body() dto: CreateCourseDto) {
-    return this.learningService.createCourse(req.user.id, dto);
+    return this.learningService.createCourse(req.user.userId, dto);
   }
 
   @Get('courses')
@@ -28,19 +28,24 @@ export class LearningController {
     return this.learningService.getCourseById(id);
   }
 
+  @Get('courses/:id/enrollment')
+  getCourseEnrollment(@Request() req, @Param('id') id: string) {
+    return this.learningService.getCourseEnrollment(req.user.userId, id);
+  }
+
   @Post('courses/:id/modules')
-  createCourseModule(@Param('id') id: string, @Body() dto: any) {
-    return this.learningService.createCourseModule(id, dto);
+  createCourseModule(@Param('id') id: string, @Body() dto: any, @Request() req) {
+    return this.learningService.createCourseModule(id, req.user.userId, dto);
   }
 
   @Post('enroll')
   enrollInCourse(@Request() req, @Body() dto: EnrollCourseDto) {
-    return this.learningService.enrollInCourse(req.user.id, dto.courseId);
+    return this.learningService.enrollInCourse(req.user.userId, dto.courseId);
   }
 
   @Get('my-enrollments')
   getMyEnrollments(@Request() req) {
-    return this.learningService.getMyEnrollments(req.user.id);
+    return this.learningService.getMyEnrollments(req.user.userId);
   }
 
   @Post('enrollments/:enrollmentId/modules/:moduleId/complete')
@@ -49,7 +54,7 @@ export class LearningController {
     @Param('enrollmentId') enrollmentId: string,
     @Param('moduleId') moduleId: string
   ) {
-    return this.learningService.markModuleComplete(req.user.id, enrollmentId, moduleId);
+    return this.learningService.markModuleComplete(req.user.userId, enrollmentId, moduleId);
   }
 
   // ─── Learning Paths ────────────────────────────────────────────────────────
@@ -83,16 +88,21 @@ export class LearningController {
 
   @Post('skill-tests/:id/attempt')
   submitAttempt(@Request() req, @Param('id') id: string, @Body() dto: SubmitAttemptDto) {
-    return this.learningService.submitAttempt(req.user.id, id, dto);
+    return this.learningService.submitAttempt(req.user.userId, id, dto);
   }
 
   @Get('my-badges')
   getMyBadges(@Request() req) {
-    return this.learningService.getMyBadges(req.user.id);
+    return this.learningService.getMyBadges(req.user.userId);
+  }
+
+  @Get('badges/:userId')
+  getUserBadges(@Param('userId') userId: string) {
+    return this.learningService.getMyBadges(userId);
   }
 
   @Get('my-attempts')
   getMyAttempts(@Request() req) {
-    return this.learningService.getMyAttempts(req.user.id);
+    return this.learningService.getMyAttempts(req.user.userId);
   }
 }

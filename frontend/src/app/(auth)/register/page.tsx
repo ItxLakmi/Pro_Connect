@@ -52,6 +52,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -71,11 +72,23 @@ export default function RegisterPage() {
       // Store token and user info using the auth hook
       login(access_token, user);
 
-      // Redirect to dashboard (placeholder)
-      router.push('/jobs');
+      // Show alert about email verification
+      alert('Registration successful! Please check your email to verify your account.');
+
+      // Redirect based on role
+      if (data.role === 'RECRUITER') {
+        router.push('/recruiter');
+      } else {
+        router.push('/feed');
+      }
     } catch (error: any) {
-      console.error('Registration error:', error.response?.data?.message || error.message);
-      alert(error.response?.data?.message || 'Failed to register. Please try again.');
+      const message = error.response?.data?.message || error.message;
+      
+      if (message === 'Email already exists') {
+        setError('email', { type: 'manual', message: 'This email is already registered.' });
+      } else {
+        alert(message || 'Failed to register. Please try again.');
+      }
     }
   };
 

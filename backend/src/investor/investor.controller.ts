@@ -14,7 +14,7 @@ export class InvestorController {
 
   @Post('startup')
   upsertStartup(@Request() req, @Body() dto: CreateStartupDto) {
-    return this.investorService.upsertStartup(req.user.id, dto);
+    return this.investorService.upsertStartup(req.user.userId, dto);
   }
 
   @Get('startups')
@@ -24,7 +24,7 @@ export class InvestorController {
 
   @Get('startups/me')
   getMyStartup(@Request() req) {
-    return this.investorService.getMyStartup(req.user.id);
+    return this.investorService.getMyStartup(req.user.userId);
   }
 
   @Get('startups/:id')
@@ -36,7 +36,7 @@ export class InvestorController {
 
   @Post('profile')
   upsertInvestorProfile(@Request() req, @Body() dto: CreateInvestorProfileDto) {
-    return this.investorService.upsertInvestorProfile(req.user.id, dto);
+    return this.investorService.upsertInvestorProfile(req.user.userId, dto);
   }
 
   @Get('investors')
@@ -46,24 +46,24 @@ export class InvestorController {
 
   @Get('profile/me')
   getMyInvestorProfile(@Request() req) {
-    return this.investorService.getMyInvestorProfile(req.user.id);
+    return this.investorService.getMyInvestorProfile(req.user.userId);
   }
 
   @Get('matches')
   getInvestorMatches(@Request() req) {
-    return this.investorService.getInvestorMatches(req.user.id);
+    return this.investorService.getInvestorMatches(req.user.userId);
   }
 
   // ─── Connections ────────────────────────────────────────────────────────
 
   @Post('connect')
   sendConnection(@Request() req, @Body() dto: ConnectRequestDto) {
-    return this.investorService.sendConnection(req.user.id, dto);
+    return this.investorService.sendConnection(req.user.userId, dto);
   }
 
   @Get('connections')
   getMyConnections(@Request() req) {
-    return this.investorService.getMyConnections(req.user.id);
+    return this.investorService.getMyConnections(req.user.userId);
   }
 
   @Patch('connections/:id')

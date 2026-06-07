@@ -62,4 +62,30 @@ export class EmailService {
     `;
     return this.sendMail(to, subject, text, html);
   }
+
+  async sendVerificationEmail(to: string, token: string) {
+    const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
+    const subject = `Verify your email address for Pro Connect`;
+    const text = `Please verify your email address by clicking the following link: ${url}`;
+    const html = `
+      <h3>Welcome to Pro Connect!</h3>
+      <p>Please click the button below to verify your email address:</p>
+      <a href="${url}" style="padding: 10px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+      <p>Or click this link: <a href="${url}">${url}</a></p>
+    `;
+    return this.sendMail(to, subject, text, html);
+  }
+
+  async sendPasswordResetEmail(to: string, token: string) {
+    const url = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+    const subject = `Reset your password for Pro Connect`;
+    const text = `You requested a password reset. Please click the following link to reset your password: ${url}`;
+    const html = `
+      <h3>Password Reset Request</h3>
+      <p>We received a request to reset your password for your Pro Connect account. Click the button below to reset it:</p>
+      <a href="${url}" style="padding: 10px 20px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
+      <p>If you didn't request this, you can safely ignore this email.</p>
+    `;
+    return this.sendMail(to, subject, text, html);
+  }
 }

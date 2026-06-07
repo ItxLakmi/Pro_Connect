@@ -26,6 +26,10 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   password      String
+  isEmailVerified Boolean @default(false)
+  emailVerificationToken String?
+  resetPasswordToken     String?
+  resetPasswordExpires   DateTime?
   role          Role      @default(PROFESSIONAL)
   firstName     String?
   lastName      String?
@@ -55,6 +59,13 @@ model User {
   likes          Like[]
   comments       Comment[]
   notifications  Notification[]
+
+  // Professional Connections
+  connections1     Connection[]        @relation("User1Connections")
+  connections2     Connection[]        @relation("User2Connections")
+  sentRequests     ConnectionRequest[] @relation("SentConnectionRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedConnectionRequests")
+  skillEndorsementsGiven SkillEndorsement[] @relation("SkillEndorser")
 
   // Learning Platform
   coursesTeaching Course[] @relation("CourseInstructor")
@@ -192,13 +203,16 @@ model Profile {
   githubUrl   String?
   linkedinUrl String?
   resumeUrl   String?
-  
+  coverPhoto  String?
+
   isBoosted   Boolean  @default(false)
   boostedUntil DateTime?
   
-  skills      Skill[]
-  experience  Experience[]
-  education   Education[]
+  skills        Skill[]
+  profileSkills ProfileSkill[]
+  experience    Experience[]
+  education     Education[]
+  projects      PortfolioProject[]
   
   updatedAt   DateTime @updatedAt
 }
@@ -243,6 +257,8 @@ model Company {
   website     String?
   description String?
   industry    String?
+  size        String?
+  location    String?
   employees   User[]
   jobs        Job[]
 }
@@ -382,7 +398,9 @@ model Notification {
   title     String
   content   String
   isRead    Boolean  @default(false)
-  link      String?  
+  link      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Learning Platform Models
@@ -427,6 +445,7 @@ model CourseModule {
   title       String
   description String?
   videoUrl    String?
+  notesUrl    String?
   order       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -586,6 +605,81 @@ model Review {
   rating      Int      // 1 to 5
   comment     String?
   createdAt   DateTime @default(now())
+}
+
+// ─── Professional Connections ─────────────────────────────────────────────────
+
+model Connection {
+  id        String   @id @default(cuid())
+  user1Id   String
+  user1     User     @relation("User1Connections", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id   String
+  user2     User     @relation("User2Connections", fields: [user2Id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([user1Id, user2Id])
+}
+
+model ConnectionRequest {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("SentConnectionRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedConnectionRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+}
+
+// ─── Skills with Percentages & Endorsements ─────────────────────────────────
+
+model ProfileSkill {
+  id           String             @id @default(cuid())
+  profileId    String
+  profile      Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skillName    String
+  percentage   Int                @default(0)
+  endorsements SkillEndorsement[]
+
+  @@unique([profileId, skillName])
+}
+
+model SkillEndorsement {
+  id             String       @id @default(cuid())
+  profileSkillId String
+  profileSkill   ProfileSkill @relation(fields: [profileSkillId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation("SkillEndorser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([profileSkillId, userId])
+}
+
+// ─── Portfolio Projects ─────────────────────────────────────────────────────
+
+model PortfolioProject {
+  id          String           @id @default(cuid())
+  profileId   String
+  profile     Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  githubUrl   String?
+  projectUrl  String?
+  imageUrl    String?
+  media       PortfolioMedia[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model PortfolioMedia {
+  id                 String           @id @default(cuid())
+  portfolioProjectId String
+  portfolioProject   PortfolioProject @relation(fields: [portfolioProjectId], references: [id], onDelete: Cascade)
+  url                String
+  type               String           // IMAGE, DOCUMENT, VIDEO
+  createdAt          DateTime         @default(now())
 }
 
 model Advertisement {

@@ -15,7 +15,6 @@ import { JobsService } from './jobs.service';
 import { Prisma } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-
 @Controller('jobs')
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
@@ -25,12 +24,9 @@ export class JobsController {
   create(@Req() req: any, @Body() createJobDto: any) {
     return this.jobsService.create({
       ...createJobDto,
-      postedBy: {
-        connect: { id: req.user.userId }
-      }
+      postedBy: { connect: { id: req.user.userId } },
     });
   }
-
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -50,6 +46,18 @@ export class JobsController {
     return this.jobsService.toggleSaveJob(req.user.userId, id);
   }
 
+  @Patch(':id/close')
+  @UseGuards(JwtAuthGuard)
+  closeJob(@Req() req: any, @Param('id') id: string) {
+    return this.jobsService.closeJob(id, req.user.userId);
+  }
+
+  @Patch(':id/reopen')
+  @UseGuards(JwtAuthGuard)
+  reopenJob(@Req() req: any, @Param('id') id: string) {
+    return this.jobsService.reopenJob(id, req.user.userId);
+  }
+
   @Get()
   findAll(
     @Query('skip') skip?: string,
@@ -59,7 +67,7 @@ export class JobsController {
     @Query('type') type?: string,
     @Query('salary') salary?: string,
   ) {
-    const where: Prisma.JobWhereInput = {};
+    const where: Prisma.JobWhereInput = { status: { not: 'CLOSED' } };
     
     if (search) {
       where.OR = [
@@ -67,18 +75,9 @@ export class JobsController {
         { description: { contains: search, mode: 'insensitive' } },
       ];
     }
-    
-    if (location) {
-      where.location = { contains: location, mode: 'insensitive' };
-    }
-    
-    if (type) {
-      where.type = type;
-    }
-
-    if (salary) {
-      where.salaryRange = { contains: salary, mode: 'insensitive' };
-    }
+    if (location) where.location = { contains: location, mode: 'insensitive' };
+    if (type) where.type = type;
+    if (salary) where.salaryRange = { contains: salary, mode: 'insensitive' };
 
     return this.jobsService.findAll({
       skip: skip ? +skip : undefined,
@@ -94,14 +93,14 @@ export class JobsController {
   }
 
   @Patch(':id')
-  // @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() updateJobDto: Prisma.JobUpdateInput) {
+  @UseGuards(JwtAuthGuard)
+  update(@Req() req: any, @Param('id') id: string, @Body() updateJobDto: Prisma.JobUpdateInput) {
     return this.jobsService.update(id, updateJobDto);
   }
 
   @Delete(':id')
-  // @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  remove(@Req() req: any, @Param('id') id: string) {
     return this.jobsService.remove(id);
   }
 }

@@ -12,6 +12,11 @@ export class CommunityController {
   constructor(private readonly communityService: CommunityService) {}
 
   // ── Communities ────────────────────────────────────────────────────────────
+  @Get('my-groups')
+  findMyGroups(@Request() req: any) {
+    return this.communityService.getUserCommunities(req.user.userId);
+  }
+
   @Get()
   findAll(@Query('type') type?: string, @Query('search') search?: string) {
     return this.communityService.findAll(type, search);
@@ -25,6 +30,11 @@ export class CommunityController {
   @Post()
   create(@Body() dto: CreateCommunityDto, @Request() req: any) {
     return this.communityService.create(req.user.userId, dto);
+  }
+
+  @Delete(':id')
+  deleteCommunity(@Param('id') id: string, @Request() req: any) {
+    return this.communityService.deleteCommunity(id, req.user.userId);
   }
 
   // ── Membership ─────────────────────────────────────────────────────────────

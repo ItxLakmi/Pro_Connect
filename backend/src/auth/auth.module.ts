@@ -7,9 +7,12 @@ import { JwtModule } from '@nestjs/jwt';
 
 import { JwtStrategy } from './jwt.strategy';
 
+import { EmailModule } from '../email/email.module';
+
 @Module({
   imports: [
     UsersModule,
+    EmailModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey', // In production, use environment variable

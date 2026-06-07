@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { CreateSkillTestDto } from './dto/create-skill-test.dto';
@@ -44,16 +44,40 @@ export class LearningService {
     });
   }
 
-  async createCourseModule(courseId: string, dto: any) {
+  async createCourseModule(courseId: string, instructorId: string, dto: any) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== instructorId) {
+      throw new ForbiddenException('Only the course instructor can add modules');
+    }
+    // Auto-assign order = next index
+    const count = await this.prisma.courseModule.count({ where: { courseId } });
     return this.prisma.courseModule.create({
       data: {
         ...dto,
+        order: dto.order ?? count,
         courseId,
       },
     });
   }
 
   async enrollInCourse(userId: string, courseId: string) {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+    });
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+    if (course.instructorId === userId) {
+      throw new ForbiddenException('Instructors cannot enroll in their own courses.');
+    }
+    const existing = await this.prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId } },
+    });
+    if (existing) {
+      throw new ConflictException('You are already enrolled in this course.');
+    }
+
     return this.prisma.enrollment.create({
       data: {
         userId,
@@ -76,6 +100,17 @@ export class LearningService {
         moduleProgress: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getCourseEnrollment(userId: string, courseId: string) {
+    return this.prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+      include: {
+        moduleProgress: true,
+      },
     });
   }
 

@@ -248,7 +248,7 @@ export default function JobsPage() {
               </p>
               <Link href="/jobs/post">
                 <Button variant="outline" className="w-full bg-white/5 border-white/10 hover:bg-white/10 transition-all">
-                  Post for $99
+                  Post Job
                 </Button>
               </Link>
 

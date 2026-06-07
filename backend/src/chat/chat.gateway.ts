@@ -10,6 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { JwtService } from '@nestjs/jwt';
+import { Inject, forwardRef } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
@@ -21,6 +22,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   constructor(
+    @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
     private readonly jwtService: JwtService,
   ) {}
@@ -66,5 +68,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     client.join(`conv_${data.conversationId}`);
     return { status: 'joined', conversationId: data.conversationId };
+  }
+
+  @SubscribeMessage('typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string; receiverId: string },
+  ) {
+    this.server.to(`user_${data.receiverId}`).emit('typing', {
+      conversationId: data.conversationId,
+      senderId: client.data.userId,
+    });
+  }
+
+  @SubscribeMessage('stopTyping')
+  handleStopTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { conversationId: string; receiverId: string },
+  ) {
+    this.server.to(`user_${data.receiverId}`).emit('stopTyping', {
+      conversationId: data.conversationId,
+      senderId: client.data.userId,
+    });
   }
 }

@@ -166,12 +166,18 @@ export default function MarketplacePage() {
                     {project.description}
                   </p>
                   <div className="flex justify-between items-center pt-4 border-t border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
-                        {project.postedBy.firstName[0]}
+                    <Link href={`/profile/${project.postedById || project.postedBy?.id}`}>
+                      <div className="flex items-center gap-3 cursor-pointer group/poster">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold hover:opacity-90 transition-opacity">
+                          {project.postedBy.avatar ? (
+                            <img src={project.postedBy.avatar} alt="Poster" className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            project.postedBy.firstName[0]
+                          )}
+                        </div>
+                        <span className="text-sm font-medium group-hover/poster:text-blue-400 transition-colors">{project.postedBy.firstName} {project.postedBy.lastName}</span>
                       </div>
-                      <span className="text-sm font-medium">{project.postedBy.firstName} {project.postedBy.lastName}</span>
-                    </div>
+                    </Link>
                     <Link href={`/marketplace/${project.id}`}>
                       <button className="px-5 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-semibold transition-all">
                         View Details

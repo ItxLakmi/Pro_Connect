@@ -152,17 +152,19 @@ export default function InvestorsPortalPage() {
               investors.map((inv) => (
                 <div key={inv.id} className="glass rounded-3xl p-6 border border-white/5 flex flex-col">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-full bg-white/5 overflow-hidden border border-white/10">
-                      {inv.user.avatar ? (
-                        <img src={inv.user.avatar} alt="Investor" className="w-full h-full object-cover" />
-                      ) : (
-                        <UserCircle className="w-full h-full text-foreground/20 p-2" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold">{inv.user.firstName} {inv.user.lastName}</h3>
-                      <p className="text-xs text-foreground/60">Angel Investor</p>
-                    </div>
+                    <Link href={`/profile/${inv.userId || inv.user?.id}`} className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-white/5 overflow-hidden border border-white/10 hover:opacity-90 transition-opacity">
+                        {inv.user.avatar ? (
+                          <img src={inv.user.avatar} alt="Investor" className="w-full h-full object-cover" />
+                        ) : (
+                          <UserCircle className="w-full h-full text-foreground/20 p-2" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold hover:text-accent transition-colors">{inv.user.firstName} {inv.user.lastName}</h3>
+                        <p className="text-xs text-foreground/60">Angel Investor</p>
+                      </div>
+                    </Link>
                   </div>
                   
                   <p className="text-sm text-foreground/80 mb-6 line-clamp-2 flex-1">{inv.bio}</p>

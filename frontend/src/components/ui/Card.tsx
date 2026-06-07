@@ -13,7 +13,7 @@ export const Card = ({ children, className = '', hoverEffect = false }: CardProp
   return (
     <motion.div
       whileHover={hoverEffect ? { y: -5 } : {}}
-      className={`glass p-6 rounded-3xl ${className}`}
+      className={`glass p-6 rounded-3xl overflow-visible ${className}`}
     >
       {children}
     </motion.div>

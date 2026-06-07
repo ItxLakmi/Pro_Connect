@@ -145,13 +145,21 @@ export default function StartupDetailPage() {
                 <Rocket className="w-5 h-5 text-accent" /> Founding Team
               </h2>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden">
-                  {startup.user.avatar && <img src={startup.user.avatar} alt="Founder" className="w-full h-full object-cover" />}
-                </div>
-                <div>
-                  <p className="font-bold">{startup.user.firstName} {startup.user.lastName}</p>
-                  <p className="text-sm text-foreground/60">Founder / CEO</p>
-                </div>
+                <Link href={`/profile/${startup.userId || startup.user?.id}`} className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden hover:opacity-90 transition-opacity shrink-0">
+                    {startup.user.avatar ? (
+                      <img src={startup.user.avatar} alt="Founder" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-white/5 flex items-center justify-center font-bold text-sm">
+                        {startup.user.firstName?.[0] || '?'}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-bold hover:text-accent transition-colors">{startup.user.firstName} {startup.user.lastName}</p>
+                    <p className="text-sm text-foreground/60">Founder / CEO</p>
+                  </div>
+                </Link>
               </div>
             </div>
           </div>

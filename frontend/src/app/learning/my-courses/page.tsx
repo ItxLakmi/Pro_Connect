@@ -164,7 +164,7 @@ export default function MyCoursesPage() {
                         {course.title}
                       </h3>
                       <p className="text-sm text-foreground/50 mb-1 relative z-10">
-                        by {course.instructor?.firstName} {course.instructor?.lastName}
+                        by <Link href={`/profile/${course.instructor?.id || course.instructorId}`} className="hover:text-accent hover:underline transition-colors font-semibold">{course.instructor?.firstName} {course.instructor?.lastName}</Link>
                       </p>
 
                       {/* Progress Bar */}

@@ -90,9 +90,12 @@ export default function LoginPage() {
             />
 
             <div className="flex items-center justify-end">
-              <button type="button" className="text-xs font-medium text-accent hover:underline">
+              <Link 
+                href="/forgot-password"
+                className="text-xs font-medium text-accent hover:underline"
+              >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             <Button type="submit" className="w-full" isLoading={isSubmitting}>
@@ -110,10 +113,20 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="glass" className="w-full gap-2 font-semibold">
+            <Button 
+              type="button"
+              variant="glass" 
+              className="w-full gap-2 font-semibold"
+              onClick={() => alert('Github login is coming soon!')}
+            >
               <Globe className="w-4 h-4" /> Github
             </Button>
-            <Button variant="glass" className="w-full gap-2 font-semibold">
+            <Button 
+              type="button"
+              variant="glass" 
+              className="w-full gap-2 font-semibold"
+              onClick={() => alert('Google login is coming soon!')}
+            >
               <Mail className="w-4 h-4" /> Google
             </Button>
           </div>
