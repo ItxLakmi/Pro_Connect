@@ -38,10 +38,10 @@ You can run the development servers for both parts:
 
 ```bash
 # Run frontend
-npm run dev:frontend
+npm run dev
 
 # Run backend
-npm run dev:backend
+npm run start:dev
 ```
 
 ## 🏗 Phases
