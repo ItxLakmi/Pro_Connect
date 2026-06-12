@@ -23,6 +23,7 @@ import { Card } from '@/components/ui/Card';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { getDashboardPath } from '@/lib/roles';
 
 const roles = [
   { id: 'PROFESSIONAL', title: 'Professional', icon: <User className="w-5 h-5" />, desc: 'Looking for a job or networking.' },
@@ -75,12 +76,7 @@ export default function RegisterPage() {
       // Show alert about email verification
       alert('Registration successful! Please check your email to verify your account.');
 
-      // Redirect based on role
-      if (data.role === 'RECRUITER') {
-        router.push('/recruiter');
-      } else {
-        router.push('/feed');
-      }
+      router.push(getDashboardPath(user.role || data.role));
     } catch (error: any) {
       const message = error.response?.data?.message || error.message;
       

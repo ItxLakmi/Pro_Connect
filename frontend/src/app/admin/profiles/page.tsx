@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { Search, Eye, Ban, MoreHorizontal } from "lucide-react";
+import api from "@/lib/api";
+import { Search, Eye, Ban, MoreHorizontal, X, UserSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Profile {
@@ -12,6 +12,7 @@ interface Profile {
     firstName: string | null;
     lastName: string | null;
     email: string;
+    avatar: string | null;
   };
   headline: string | null;
   location: string | null;
@@ -21,31 +22,15 @@ export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/admin/profiles");
+        const response = await api.get("/admin/profiles");
         setProfiles(response.data);
       } catch (error) {
         console.error("Failed to fetch profiles", error);
-        // Fallback for demonstration
-        setProfiles([
-          {
-            id: "p1",
-            userId: "1",
-            user: { firstName: "Alice", lastName: "Smith", email: "alice@example.com" },
-            headline: "Senior Software Engineer",
-            location: "San Francisco, CA",
-          },
-          {
-            id: "p2",
-            userId: "2",
-            user: { firstName: "Bob", lastName: "Jones", email: "bob@example.com" },
-            headline: "Product Designer @ Creative Studio",
-            location: "New York, NY",
-          },
-        ]);
       } finally {
         setLoading(false);
       }
@@ -101,7 +86,16 @@ export default function ProfilesPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                  {profile.user.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.user.avatar}
+                      alt={`${profile.user.firstName} ${profile.user.lastName}`}
+                      className="w-12 h-12 rounded-full object-cover shadow-sm ring-2 ring-white dark:ring-gray-800"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                    />
+                  ) : null}
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm ${profile.user.avatar ? 'hidden' : ''}`}>
                     {(profile.user.firstName?.[0] || "") + (profile.user.lastName?.[0] || "") || profile.user.email[0].toUpperCase()}
                   </div>
                   <div>
@@ -132,7 +126,10 @@ export default function ProfilesPage() {
               </div>
 
               <div className="flex items-center gap-2 pt-4 border-t border-gray-100 dark:border-gray-800">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors">
+                <button 
+                  onClick={() => setSelectedProfile(profile)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 rounded-lg text-sm font-medium transition-colors"
+                >
                   <Eye className="w-4 h-4" /> View Full
                 </button>
                 <button className="flex-1 flex items-center justify-center gap-2 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-900/20 dark:hover:bg-rose-900/40 dark:text-rose-400 rounded-lg text-sm font-medium transition-colors">
@@ -143,6 +140,85 @@ export default function ProfilesPage() {
           ))
         )}
       </div>
+
+      {/* View Profile Modal */}
+      {selectedProfile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-gray-800"
+          >
+            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <UserSquare className="w-5 h-5 text-blue-500" /> Profile Details
+              </h2>
+              <button onClick={() => setSelectedProfile(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 mb-6">
+                {selectedProfile.user.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedProfile.user.avatar}
+                    alt={`${selectedProfile.user.firstName} ${selectedProfile.user.lastName}`}
+                    className="w-16 h-16 rounded-full object-cover shadow-sm ring-2 ring-gray-200 dark:ring-gray-700"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                  />
+                ) : null}
+                <div className={`w-16 h-16 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-2xl shadow-sm ${selectedProfile.user.avatar ? 'hidden' : ''}`}>
+                  {(selectedProfile.user.firstName?.[0] || "") + (selectedProfile.user.lastName?.[0] || "") || selectedProfile.user.email[0].toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    {selectedProfile.user.firstName} {selectedProfile.user.lastName}
+                  </h3>
+                  <p className="text-sm text-gray-500">{selectedProfile.user.email}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 text-sm">
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Headline</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    {selectedProfile.headline || "No headline provided"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Location</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    {selectedProfile.location || "Not specified"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">Profile ID</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 font-mono text-xs">
+                    {selectedProfile.id}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-1">User ID</p>
+                  <p className="text-sm text-gray-800 dark:text-gray-200 font-mono text-xs">
+                    {selectedProfile.userId}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 flex">
+                <button 
+                  onClick={() => setSelectedProfile(null)}
+                  className="w-full px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

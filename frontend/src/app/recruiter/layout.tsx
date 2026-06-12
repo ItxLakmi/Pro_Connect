@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { RoleGate } from '@/components/RoleGate';
 
 const navItems = [
   { href: '/recruiter', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -38,6 +39,7 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
   };
 
   return (
+    <RoleGate allowedRoles={['RECRUITER', 'ADMIN']}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       {/* Overlay for mobile */}
       {sidebarOpen && (
@@ -134,5 +136,6 @@ export default function RecruiterLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </div>
+    </RoleGate>
   );
 }

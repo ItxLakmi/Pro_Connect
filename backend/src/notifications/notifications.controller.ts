@@ -31,17 +31,7 @@ export class NotificationsController {
     }
   }
 
-  @Patch(':id/read')
-  async markAsRead(@Param('id') id: string, @Request() req) {
-    try {
-      await this.notificationsService.markAsRead(id, req.user.userId);
-      return { success: true };
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      throw error;
-    }
-  }
-
+  // IMPORTANT: 'read-all' must come BEFORE ':id/read' to avoid route conflict
   @Patch('read-all')
   async markAllAsRead(@Request() req) {
     try {
@@ -49,6 +39,17 @@ export class NotificationsController {
       return { success: true };
     } catch (error) {
       console.error('Error marking all as read:', error);
+      throw error;
+    }
+  }
+
+  @Patch(':id/read')
+  async markAsRead(@Param('id') id: string, @Request() req) {
+    try {
+      await this.notificationsService.markAsRead(id, req.user.userId);
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
       throw error;
     }
   }
@@ -83,14 +84,21 @@ export class NotificationsController {
           type: 'MESSAGE',
           title: 'New Message',
           content: 'You have a new message from Sarah Smith',
-          link: '/messaging',
+          link: '/messages',
         },
         {
           userId: req.user.userId,
           type: 'LIKE',
           title: 'Post Liked',
           content: 'Your post received a like',
-          link: '/posts/789',
+          link: '/feed',
+        },
+        {
+          userId: req.user.userId,
+          type: 'CONNECTION_REQUEST',
+          title: 'Connection Request',
+          content: 'Kasun Perera sent you a connection request',
+          link: '/network',
         },
       ];
 

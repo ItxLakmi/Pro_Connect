@@ -7,12 +7,14 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/hooks/useAuth';
+import { AutocompleteInput } from '@/components/ui/AutocompleteInput';
 
 export default function MarketplacePage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'recommended'>('all');
+  const [category, setCategory] = useState('');
 
   useEffect(() => {
     fetchProjects();
@@ -74,13 +76,14 @@ export default function MarketplacePage() {
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-gray-400 block mb-2">Category</label>
-                  <select className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500/50">
-                    <option>All Categories</option>
-                    <option>Web Development</option>
-                    <option>Design</option>
-                    <option>Marketing</option>
-                  </select>
+                  <AutocompleteInput 
+                    label="Category" 
+                    placeholder="e.g. Design, Web Development..."
+                    value={category} 
+                    onChange={setCategory} 
+                    suggestions={['Web Development', 'Design', 'Marketing']} 
+                    showAllOnFocus 
+                  />
                 </div>
                 <div>
                   <label className="text-sm text-gray-400 block mb-2">Budget Range</label>

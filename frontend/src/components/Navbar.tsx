@@ -19,12 +19,14 @@ import {
   LayoutDashboard,
   ChevronDown,
   UserCog,
-  Loader2
+  Loader2,
+  Crown
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
+import { getDashboardPath, ROLE_LABELS, SWITCHABLE_ROLES, UserRole } from '@/lib/roles';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -61,28 +63,15 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSwitchToRecruiter = async () => {
+  const handleSwitchRole = async (role: UserRole) => {
     setSwitchingRole(true);
     try {
-      await api.patch('/users/me/role', { role: 'RECRUITER' });
-      updateUser({ role: 'RECRUITER' });
+      await api.patch('/users/me/role', { role });
+      // For admin users: DB role stays ADMIN, we just preview via localStorage
+      // For regular users: DB role is actually changed
+      updateUser({ role });
       setProfileMenuOpen(false);
-      router.push('/recruiter');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to switch role. Please try again.');
-    } finally {
-      setSwitchingRole(false);
-    }
-  };
-
-  const handleSwitchToProfessional = async () => {
-    setSwitchingRole(true);
-    try {
-      await api.patch('/users/me/role', { role: 'PROFESSIONAL' });
-      updateUser({ role: 'PROFESSIONAL' });
-      setProfileMenuOpen(false);
-      router.push('/feed');
+      router.push(getDashboardPath(role));
     } catch (err) {
       console.error(err);
       alert('Failed to switch role. Please try again.');
@@ -102,10 +91,16 @@ export default function Navbar() {
     </div>
   );
 
+  const guestNavItems = [
+    { name: 'Home', href: '/', icon: <Home className="w-5 h-5" /> },
+    { name: 'Jobs', href: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
+  ];
+
   const professionalNavItems = [
     { name: 'Home', href: '/feed', icon: <Home className="w-5 h-5" /> },
     { name: 'Network', href: '/network', icon: <Users className="w-5 h-5" /> },
     { name: 'Jobs', href: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Marketplace', href: '/marketplace', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
     { name: 'Groups', href: '/community', icon: <Globe className="w-5 h-5" /> },
     { name: 'Learning', href: '/learning', icon: <GraduationCap className="w-5 h-5" /> },
@@ -115,11 +110,61 @@ export default function Navbar() {
 
   const recruiterNavItems = [
     { name: 'Dashboard', href: '/recruiter', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Post Job', href: '/jobs/post', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'My Jobs', href: '/recruiter/jobs', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Applicants', href: '/recruiter/applicants', icon: <Users className="w-5 h-5" /> },
+    { name: 'Search', href: '/recruiter/search', icon: <Search className="w-5 h-5" /> },
     { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
     { name: 'Notifications', href: '/notifications', icon: notificationIcon },
   ];
 
-  const navItems = user?.role === 'RECRUITER' ? recruiterNavItems : professionalNavItems;
+  const freelancerNavItems = [
+    { name: 'Marketplace', href: '/marketplace', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Post Project', href: '/marketplace/post', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Network', href: '/network', icon: <Users className="w-5 h-5" /> },
+    { name: 'Learning', href: '/learning', icon: <GraduationCap className="w-5 h-5" /> },
+    { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
+    { name: 'Notifications', href: '/notifications', icon: notificationIcon },
+  ];
+
+  const founderNavItems = [
+    { name: 'Startup', href: '/investors/create-startup', icon: <Rocket className="w-5 h-5" /> },
+    { name: 'Investors', href: '/investors', icon: <Rocket className="w-5 h-5" /> },
+    { name: 'Post Job', href: '/jobs/post', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Post Project', href: '/marketplace/post', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
+    { name: 'Notifications', href: '/notifications', icon: notificationIcon },
+  ];
+
+  const investorNavItems = [
+    { name: 'Startups', href: '/investors', icon: <Rocket className="w-5 h-5" /> },
+    { name: 'Investor Profile', href: '/investors/create-profile', icon: <User className="w-5 h-5" /> },
+    { name: 'Network', href: '/network', icon: <Users className="w-5 h-5" /> },
+    { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
+    { name: 'Notifications', href: '/notifications', icon: notificationIcon },
+  ];
+
+  const adminNavItems = [
+    { name: 'Admin', href: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Users', href: '/admin/users', icon: <Users className="w-5 h-5" /> },
+    { name: 'Jobs', href: '/admin/jobs', icon: <Briefcase className="w-5 h-5" /> },
+    { name: 'Courses', href: '/admin/courses', icon: <GraduationCap className="w-5 h-5" /> },
+    { name: 'Ads', href: '/admin/advertisements', icon: <Globe className="w-5 h-5" /> },
+  ];
+
+  const roleNavItems: Record<string, typeof professionalNavItems> = {
+    PROFESSIONAL: professionalNavItems,
+    RECRUITER: recruiterNavItems,
+    FREELANCER: freelancerNavItems,
+    STARTUP_FOUNDER: founderNavItems,
+    INVESTOR: investorNavItems,
+    ADMIN: adminNavItems,
+    MENTOR: professionalNavItems,
+    PARTNER: professionalNavItems,
+  };
+
+  const navItems = user ? (roleNavItems[user.role] ?? professionalNavItems) : guestNavItems;
+  const currentRole = user?.role as UserRole | undefined;
 
   if (['/login', '/register'].includes(pathname)) return null;
 
@@ -156,7 +201,7 @@ export default function Navbar() {
               href={item.href}
               className={`
                 p-2 lg:px-3 lg:py-2 rounded-xl flex flex-col xl:flex-row items-center gap-1 xl:gap-2 text-[10px] xl:text-sm font-medium transition-all
-                ${pathname === item.href 
+                ${(pathname === item.href || (item.href !== '/' && pathname.startsWith(`${item.href}/`)))
                   ? 'bg-accent/10 text-accent' 
                   : 'text-foreground/60 hover:bg-white/5 hover:text-foreground'}
               `}
@@ -193,75 +238,96 @@ export default function Navbar() {
                     )}
                   </div>
                   <span className="text-sm font-bold hidden sm:block max-w-[80px] lg:max-w-[120px] truncate">{user.firstName}</span>
+                  {user.isPremium && <Crown size={14} className="text-amber-500 fill-amber-500 hidden sm:block" />}
                   <ChevronDown className={`w-3.5 h-3.5 text-foreground/50 hidden sm:block transition-transform duration-200 ${profileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown */}
                 {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-gray-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     {/* User info header */}
-                    <div className="px-4 py-3 border-b border-white/5">
-                      <p className="text-sm font-bold text-white truncate">{user.firstName} {user.lastName}</p>
-                      <p className="text-xs text-foreground/40 truncate mt-0.5">{user.email}</p>
-                      <span className={`inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        user.role === 'RECRUITER'
-                          ? 'bg-blue-600/20 text-blue-400'
-                          : 'bg-white/10 text-foreground/60'
+                    <div className="px-4 py-3 border-b border-gray-100 dark:border-white/5">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.firstName} {user.lastName}</p>
+                        {user.isPremium && <Crown size={14} className="text-amber-500 fill-amber-500 shrink-0" />}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{user.email}</p>
+                      <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        user.role === 'ADMIN' || user.role === 'RECRUITER'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300'
                       }`}>
-                        {user.role?.replace(/_/g, ' ')}
+                        {ROLE_LABELS[currentRole as UserRole] ?? user.role?.replace(/_/g, ' ')}
                       </span>
                     </div>
 
                     {/* Menu items */}
-                    <div className="py-1.5">
+                    <div className="py-2">
+                      <Link
+                        href={getDashboardPath(user.role)}
+                        id="nav-role-dashboard"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <LayoutDashboard className="w-4 h-4" /> {ROLE_LABELS[currentRole as UserRole] ?? 'Role'} Dashboard
+                      </Link>
+
+                      {/* Always show Admin Dashboard link if user originally logged in as ADMIN */}
+                      {user.originalRole === 'ADMIN' && user.role !== 'ADMIN' && (
+                        <Link
+                          href="/admin"
+                          id="nav-admin-dashboard"
+                          onClick={() => setProfileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        >
+                          <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
+                        </Link>
+                      )}
+
                       <Link
                         href="/profile"
                         id="nav-my-profile"
                         onClick={() => setProfileMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-white/5 transition-all"
+                        className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                       >
                         <User className="w-4 h-4" /> My Profile
                       </Link>
 
-                      {user.role === 'RECRUITER' ? (
-                        <>
-                          <Link
-                            href="/recruiter"
-                            id="nav-recruiter-dashboard"
-                            onClick={() => setProfileMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-4 py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 transition-all"
-                          >
-                            <LayoutDashboard className="w-4 h-4" /> Recruiter Dashboard
-                          </Link>
-                          <button
-                            id="nav-switch-to-professional"
-                            onClick={handleSwitchToProfessional}
-                            disabled={switchingRole}
-                            className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-600/10 transition-all disabled:opacity-60"
-                          >
-                            {switchingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCog className="w-4 h-4" />}
-                            {switchingRole ? 'Switching...' : 'Switch to Professional'}
-                          </button>
-                        </>
-                      ) : (
+                      <div className="my-1.5 mx-4 border-t border-gray-100 dark:border-white/5"></div>
+
+                      {SWITCHABLE_ROLES.filter(role => role !== currentRole).map(role => (
                         <button
-                          id="nav-switch-to-recruiter"
-                          onClick={handleSwitchToRecruiter}
+                          key={role}
+                          id={`nav-switch-to-${role.toLowerCase()}`}
+                          onClick={() => handleSwitchRole(role)}
                           disabled={switchingRole}
-                          className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-emerald-400 hover:text-emerald-300 hover:bg-emerald-600/10 transition-all disabled:opacity-60"
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
                         >
                           {switchingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCog className="w-4 h-4" />}
-                          {switchingRole ? 'Switching...' : 'Switch to Recruiter'}
+                          {switchingRole ? 'Switching...' : `Switch to ${ROLE_LABELS[role]}`}
+                        </button>
+                      ))}
+
+                      {/* Admin-only: switch back to Admin role */}
+                      {user.originalRole === 'ADMIN' && user.role !== 'ADMIN' && (
+                        <button
+                          id="nav-switch-to-admin"
+                          onClick={() => handleSwitchRole('ADMIN')}
+                          disabled={switchingRole}
+                          className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                        >
+                          {switchingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCog className="w-4 h-4" />}
+                          {switchingRole ? 'Switching...' : 'Switch to Admin'}
                         </button>
                       )}
                     </div>
 
                     {/* Logout */}
-                    <div className="border-t border-white/5 pt-1.5">
+                    <div className="border-t border-gray-100 dark:border-white/5 pt-1.5 pb-1">
                       <button 
                         id="nav-logout"
                         onClick={() => { setProfileMenuOpen(false); logout(); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-600/10 transition-all"
+                        className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                       >
                         <LogOut className="w-4 h-4" /> Log Out
                       </button>

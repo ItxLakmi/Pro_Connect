@@ -319,6 +319,63 @@ type FilterType = 'All' | 'Following' | 'Connections' | 'Groups' | 'Jobs';
 type SortType = 'Latest' | 'Top';
 type ComposeType = 'post' | 'photo' | 'video' | 'article' | 'event';
 
+// ── Ad Banner Component ──────────────────────────────────────────────────────
+function AdBanner() {
+  const [ads, setAds] = useState<{ id: string; title: string; description?: string; imageUrl: string; targetUrl: string; startDate?: string; endDate?: string }[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    api.get('/admin/advertisements')
+      .then((res) => {
+        const now = new Date();
+        const active = (res.data as any[]).filter((ad) => {
+          if (!ad.active) return false;
+          if (ad.startDate && new Date(ad.startDate) > now) return false;
+          if (ad.endDate && new Date(ad.endDate) < now) return false;
+          return true;
+        });
+        setAds(active);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const timer = setInterval(() => setCurrentIndex((i) => (i + 1) % ads.length), 5000);
+    return () => clearInterval(timer);
+  }, [ads.length]);
+
+  if (ads.length === 0) return null;
+
+  const ad = ads[currentIndex];
+  return (
+    <div className="bg-card border border-border rounded-lg overflow-hidden shadow-sm">
+      <p className="text-[11px] text-gray-400 px-3 pt-2 pb-1 font-medium tracking-wide uppercase">Sponsored</p>
+      <a href={ad.targetUrl} target="_blank" rel="noopener noreferrer" className="block group">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={ad.imageUrl}
+          alt={ad.title}
+          className="w-full h-36 object-cover group-hover:opacity-95 transition-opacity"
+          onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/300x144/374151/FFFFFF?text=Ad'; }}
+        />
+        <div className="p-3">
+          <p className="text-[13px] font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 transition-colors leading-tight">{ad.title}</p>
+          {ad.description && <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{ad.description}</p>}
+          <p className="text-[11px] text-blue-500 mt-1 truncate">{ad.targetUrl.replace(/^https?:\/\//, '')}</p>
+        </div>
+      </a>
+      {ads.length > 1 && (
+        <div className="flex justify-center gap-1.5 pb-2">
+          {ads.map((_, i) => (
+            <button key={i} onClick={() => setCurrentIndex(i)} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentIndex ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FeedPage() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -497,15 +554,17 @@ export default function FeedPage() {
               <span className="text-blue-600">{networkStats.connectionsCount}</span>
             </Link>
             
-            <div className="border-t border-border py-3 px-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
-              <div className="flex gap-2 text-gray-800 dark:text-gray-200">
-                <Crown size={14} className="text-[#F8C77E] fill-current mt-0.5" />
-                <div className="flex flex-col">
-                  <span className="text-[12px] text-gray-500">Try Premium</span>
-                  <span className="text-[12px] font-semibold hover:text-blue-600 hover:underline">Unlock exclusive tools & insights</span>
+            {!user?.isPremium && (
+              <Link href="/premium" className="border-t border-border py-3 px-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer block">
+                <div className="flex gap-2 text-gray-800 dark:text-gray-200">
+                  <Crown size={14} className="text-[#F8C77E] fill-current mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-[12px] text-gray-500">Try Premium</span>
+                    <span className="text-[12px] font-semibold hover:text-blue-600 hover:underline">Unlock exclusive tools & insights</span>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </Link>
+            )}
           </div>
 
           {/* My Network */}
@@ -730,6 +789,9 @@ export default function FeedPage() {
               )}
             </ul>
           </div>
+
+          {/* Sponsored Ad Banner */}
+          <AdBanner />
 
           {/* People you may know */}
           <div className="bg-card border border-border rounded-lg shadow-sm p-4">

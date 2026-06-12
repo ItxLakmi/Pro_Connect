@@ -31,6 +31,7 @@
     "@nestjs/websockets": "^11.1.19",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@stripe/stripe-js": "^9.8.0",
     "@types/pg": "^8.20.0",
     "bcrypt": "^6.0.0",
     "cache-manager": "^7.2.8",
@@ -43,7 +44,8 @@
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "stripe": "^22.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

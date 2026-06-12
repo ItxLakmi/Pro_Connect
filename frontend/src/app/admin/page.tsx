@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   Users,
   Briefcase,
@@ -28,8 +29,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Variants } from "framer-motion";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface AnalyticsData {
   kpis: {
@@ -88,14 +87,14 @@ const fadeUp: Variants = {
 };
 
 const kpiConfig = [
-  { key: "totalUsers", label: "Total Users", icon: Users, color: "#3b82f6", bg: "bg-blue-50 dark:bg-blue-900/20" },
-  { key: "totalJobs", label: "Total Jobs", icon: Briefcase, color: "#8b5cf6", bg: "bg-purple-50 dark:bg-purple-900/20" },
-  { key: "totalProjects", label: "Freelance Projects", icon: TrendingUp, color: "#10b981", bg: "bg-emerald-50 dark:bg-emerald-900/20" },
-  { key: "totalCourses", label: "Courses", icon: GraduationCap, color: "#f59e0b", bg: "bg-amber-50 dark:bg-amber-900/20" },
-  { key: "totalEnrollments", label: "Enrollments", icon: BookOpen, color: "#06b6d4", bg: "bg-cyan-50 dark:bg-cyan-900/20" },
-  { key: "totalApplications", label: "Applications", icon: CheckCircle, color: "#ec4899", bg: "bg-pink-50 dark:bg-pink-900/20" },
-  { key: "activeSubscriptions", label: "Subscriptions", icon: CreditCard, color: "#6366f1", bg: "bg-indigo-50 dark:bg-indigo-900/20" },
-  { key: "totalRevenue", label: "Revenue ($)", icon: DollarSign, color: "#10b981", bg: "bg-emerald-50 dark:bg-emerald-900/20", prefix: "$" },
+  { key: "totalUsers",         label: "Total Users",       icon: Users,         color: "#3b82f6", bg: "bg-blue-50 dark:bg-blue-900/20",     href: "/admin/users" },
+  { key: "totalJobs",          label: "Total Jobs",        icon: Briefcase,     color: "#8b5cf6", bg: "bg-purple-50 dark:bg-purple-900/20", href: "/admin/jobs" },
+  { key: "totalProjects",      label: "Freelance Projects",icon: TrendingUp,    color: "#10b981", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/users" },
+  { key: "totalCourses",       label: "Courses",           icon: GraduationCap, color: "#f59e0b", bg: "bg-amber-50 dark:bg-amber-900/20",   href: "/admin/courses" },
+  { key: "totalEnrollments",   label: "Enrollments",       icon: BookOpen,      color: "#06b6d4", bg: "bg-cyan-50 dark:bg-cyan-900/20",     href: "/admin/courses" },
+  { key: "totalApplications",  label: "Applications",      icon: CheckCircle,   color: "#ec4899", bg: "bg-pink-50 dark:bg-pink-900/20",    href: "/admin/jobs" },
+  { key: "activeSubscriptions",label: "Subscriptions",     icon: CreditCard,    color: "#6366f1", bg: "bg-indigo-50 dark:bg-indigo-900/20", href: "/admin/users" },
+  { key: "totalRevenue",       label: "Revenue ($)",       icon: DollarSign,    color: "#10b981", bg: "bg-emerald-50 dark:bg-emerald-900/20", href: "/admin/users", prefix: "$" },
 ];
 
 export default function AdminDashboard() {
@@ -103,59 +102,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    axios
-      .get(`${API}/analytics/dashboard`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      })
+    api.get('/analytics/dashboard')
       .then((res) => setData(res.data))
-      .catch(() => {
-        // Use rich mock data to showcase the dashboard even without a live API
-        setData({
-          kpis: {
-            totalUsers: 15482,
-            totalJobs: 2341,
-            totalProjects: 892,
-            totalCourses: 145,
-            totalEnrollments: 8924,
-            totalApplications: 6341,
-            activeSubscriptions: 1203,
-            totalRevenue: 28450.50,
-            skillPassRate: 72,
-          },
-          userGrowth: Array.from({ length: 30 }, (_, i) => {
-            const d = new Date();
-            d.setDate(d.getDate() - (29 - i));
-            return {
-              date: d.toISOString().substring(0, 10),
-              users: Math.floor(Math.random() * 80) + 20,
-            };
-          }),
-          roleDistribution: [
-            { role: "PROFESSIONAL", count: 8200 },
-            { role: "RECRUITER", count: 2100 },
-            { role: "FREELANCER", count: 3100 },
-            { role: "STARTUP_FOUNDER", count: 820 },
-            { role: "INVESTOR", count: 560 },
-            { role: "MENTOR", count: 402 },
-          ],
-          jobBreakdown: [
-            { status: "APPROVED", count: 1980 },
-            { status: "PENDING", count: 241 },
-            { status: "REJECTED", count: 120 },
-          ],
-          applicationBreakdown: [
-            { status: "PENDING", count: 2100 },
-            { status: "SHORTLISTED", count: 1850 },
-            { status: "REJECTED", count: 2391 },
-          ],
-          courseLevelBreakdown: [
-            { level: "BEGINNER", count: 68 },
-            { level: "INTERMEDIATE", count: 54 },
-            { level: "ADVANCED", count: 23 },
-          ],
-        });
-      })
+      .catch((err) => console.error("Failed to fetch analytics", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -195,22 +144,24 @@ export default function AdminDashboard() {
             ? `${cfg.prefix}${raw.toLocaleString()}`
             : raw.toLocaleString();
           return (
-            <motion.div
-              key={cfg.key}
-              custom={i}
-              initial="hidden"
-              animate="visible"
-              variants={fadeUp}
-              className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center`}>
-                  <Icon className="w-5 h-5" style={{ color: cfg.color }} />
+            <Link href={cfg.href} key={cfg.key}>
+              <motion.div
+                custom={i}
+                initial="hidden"
+                animate="visible"
+                variants={fadeUp}
+                className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-700 hover:-translate-y-0.5 transition-all cursor-pointer group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${cfg.bg} flex items-center justify-center`}>
+                    <Icon className="w-5 h-5" style={{ color: cfg.color }} />
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium">View →</span>
                 </div>
-              </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{cfg.label}</p>
-            </motion.div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{cfg.label}</p>
+              </motion.div>
+            </Link>
           );
         })}
       </div>

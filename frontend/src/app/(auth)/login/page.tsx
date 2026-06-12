@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { getDashboardPath } from '@/lib/roles';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -40,8 +41,7 @@ export default function LoginPage() {
       // Store token and user info using the auth hook
       login(access_token, user);
 
-      // Redirect to dashboard (placeholder)
-      router.push('/jobs');
+      router.push(getDashboardPath(user.role));
     } catch (error: any) {
       console.error('Login error:', error.response?.data?.message || error.message);
       alert(error.response?.data?.message || 'Failed to login. Please check your credentials.');

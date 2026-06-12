@@ -10,10 +10,13 @@ import {
   Briefcase,
   GraduationCap,
   Megaphone,
+  Crown,
   Menu,
-  X
+  X,
+  CreditCard
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RoleGate } from "@/components/RoleGate";
 
 const sidebarLinks = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -22,6 +25,8 @@ const sidebarLinks = [
   { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
   { name: "Courses", href: "/admin/courses", icon: GraduationCap },
   { name: "Advertisements", href: "/admin/advertisements", icon: Megaphone },
+  { name: "Plans", href: "/admin/subscriptions", icon: Crown },
+  { name: "Subscribers", href: "/admin/subscribers", icon: CreditCard },
 ];
 
 export default function AdminLayout({
@@ -35,6 +40,7 @@ export default function AdminLayout({
   const toggleMobileMenu = () => setMobileOpen(!mobileOpen);
 
   return (
+    <RoleGate allowedRoles={["ADMIN"]}>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col md:flex-row font-sans">
       
       {/* Mobile Top Bar */}
@@ -129,5 +135,6 @@ export default function AdminLayout({
         {children}
       </main>
     </div>
+    </RoleGate>
   );
 }

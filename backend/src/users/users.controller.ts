@@ -18,6 +18,7 @@ export class UsersController {
   /**
    * Switch the current user's role (e.g. PROFESSIONAL → RECRUITER).
    * Body: { role: 'RECRUITER' }
+   * NOTE: ADMIN users cannot change their DB role — switching is UI-only for them.
    */
   @Patch('me/role')
   async switchRole(@Req() req: any, @Body('role') role: string) {
@@ -28,6 +29,13 @@ export class UsersController {
       Role.STARTUP_FOUNDER,
       Role.INVESTOR,
     ];
+
+    // Admins cannot change their DB role — UI handles preview mode in localStorage
+    if (req.user.role === Role.ADMIN) {
+      const current = await this.usersService.findById(req.user.userId);
+      const { password, ...safeUser } = current as any;
+      return safeUser;
+    }
 
     if (!allowedRoles.includes(role as Role)) {
       throw new BadRequestException(`Invalid role: ${role}`);
