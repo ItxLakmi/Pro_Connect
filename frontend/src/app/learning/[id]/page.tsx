@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   PlayCircle, CheckCircle, BookOpen, Clock, Lock, ArrowLeft,
   Plus, Trash2, ChevronDown, ChevronUp, Save, X, GraduationCap,
@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CourseDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const courseId = params.id as string;
   const { user } = useAuth();
 
@@ -39,6 +40,18 @@ export default function CourseDetailPage() {
   const [moduleSuccess, setModuleSuccess] = useState('');
 
   const isInstructor = user && course && course.instructor?.id === user.id;
+  const isAdmin = user?.role === 'ADMIN';
+  const canManage = isInstructor || isAdmin;
+
+  const handleDeleteCourse = async () => {
+    if (!confirm('Are you sure you want to completely delete this course? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/learning/courses/${courseId}`);
+      router.push('/learning');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete course');
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -187,18 +200,28 @@ export default function CourseDetailPage() {
           <ArrowLeft className="w-4 h-4" /> Back to courses
         </Link>
 
-        {/* Instructor Badge */}
-        {isInstructor && (
+        {/* Instructor/Admin Badge */}
+        {canManage && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3 mb-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-3"
+            className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border rounded-2xl px-5 py-3 ${isAdmin && !isInstructor ? 'bg-red-500/10 border-red-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}
           >
-            <Crown className="w-5 h-5 text-amber-400 shrink-0" />
-            <div>
-              <p className="text-sm font-bold text-amber-400">You are the instructor of this course</p>
-              <p className="text-xs text-amber-400/70">Use the panel below to add and manage course modules</p>
+            <div className="flex items-center gap-3">
+              <Crown className={`w-5 h-5 shrink-0 ${isAdmin && !isInstructor ? 'text-red-400' : 'text-amber-400'}`} />
+              <div>
+                <p className={`text-sm font-bold ${isAdmin && !isInstructor ? 'text-red-400' : 'text-amber-400'}`}>
+                  {isAdmin && !isInstructor ? 'Admin Access: You can manage this course' : 'You are the instructor of this course'}
+                </p>
+                <p className={`text-xs ${isAdmin && !isInstructor ? 'text-red-400/70' : 'text-amber-400/70'}`}>Use the panel below to manage modules or delete the course.</p>
+              </div>
             </div>
+            <button 
+              onClick={handleDeleteCourse}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-colors shrink-0"
+            >
+               <Trash2 className="w-4 h-4" /> Delete Course
+            </button>
           </motion.div>
         )}
 
@@ -302,8 +325,8 @@ export default function CourseDetailPage() {
               </div>
             </div>
 
-            {/* ── Add Module Panel (Instructor Only) ── */}
-            {isInstructor && (
+            {/* ── Add Module Panel (Instructor/Admin Only) ── */}
+            {canManage && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -500,18 +523,18 @@ export default function CourseDetailPage() {
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      onClick={() => (isEnrolled || isInstructor) && setActiveModuleIndex(idx)}
-                      disabled={!isEnrolled && !isInstructor}
+                      onClick={() => (isEnrolled || canManage) && setActiveModuleIndex(idx)}
+                      disabled={!isEnrolled && !canManage}
                       className={`
                         w-full text-left p-4 rounded-xl flex items-start gap-4 transition-all
-                        ${(!isEnrolled && !isInstructor) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                        ${(!isEnrolled && !canManage) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                         ${activeModuleIndex === idx
                           ? 'bg-accent/10 border border-accent/20'
                           : 'bg-white/5 hover:bg-white/10 border border-transparent'}
                       `}
                     >
                       <div className="shrink-0 mt-0.5">
-                        {(isEnrolled || isInstructor) ? (
+                        {(isEnrolled || canManage) ? (
                           completedModuleIds.has(module.id) ? (
                             <CheckCircle className="w-5 h-5 text-green-500" />
                           ) : (
@@ -533,7 +556,7 @@ export default function CourseDetailPage() {
                   ))
                 ) : (
                   <div className="text-center py-8 text-foreground/40 text-sm">
-                    {isInstructor
+                    {canManage
                       ? <><GraduationCap className="w-8 h-8 mx-auto mb-2 opacity-30" /><p>No modules yet.</p><p className="mt-1">Use the panel to add your first module.</p></>
                       : 'No modules published yet.'
                     }
@@ -542,7 +565,7 @@ export default function CourseDetailPage() {
               </div>
 
               {/* Quick-add shortcut for instructors when sidebar is empty */}
-              {isInstructor && (
+              {canManage && (
                 <button
                   onClick={() => setShowAddModule(true)}
                   className="mt-4 w-full flex items-center justify-center gap-2 border border-dashed border-amber-500/30 hover:border-amber-500/60 text-amber-400/70 hover:text-amber-400 rounded-xl py-3 text-sm font-medium transition-all"

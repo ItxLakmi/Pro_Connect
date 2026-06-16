@@ -44,11 +44,11 @@ export class LearningService {
     });
   }
 
-  async createCourseModule(courseId: string, instructorId: string, dto: any) {
+  async createCourseModule(courseId: string, instructorId: string, dto: any, userRole?: string) {
     const course = await this.prisma.course.findUnique({ where: { id: courseId } });
     if (!course) throw new NotFoundException('Course not found');
-    if (course.instructorId !== instructorId) {
-      throw new ForbiddenException('Only the course instructor can add modules');
+    if (course.instructorId !== instructorId && userRole !== 'ADMIN') {
+      throw new ForbiddenException('Only the course instructor or an admin can add modules');
     }
     // Auto-assign order = next index
     const count = await this.prisma.courseModule.count({ where: { courseId } });
@@ -58,6 +58,29 @@ export class LearningService {
         order: dto.order ?? count,
         courseId,
       },
+    });
+  }
+
+  async updateCourse(userId: string, role: string, courseId: string, dto: any) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== userId && role !== 'ADMIN') {
+      throw new ForbiddenException('Not authorized to edit this course');
+    }
+    return this.prisma.course.update({
+      where: { id: courseId },
+      data: dto,
+    });
+  }
+
+  async deleteCourse(userId: string, role: string, courseId: string) {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+    if (!course) throw new NotFoundException('Course not found');
+    if (course.instructorId !== userId && role !== 'ADMIN') {
+      throw new ForbiddenException('Not authorized to delete this course');
+    }
+    return this.prisma.course.delete({
+      where: { id: courseId },
     });
   }
 

@@ -35,7 +35,17 @@ export class LearningController {
 
   @Post('courses/:id/modules')
   createCourseModule(@Param('id') id: string, @Body() dto: any, @Request() req) {
-    return this.learningService.createCourseModule(id, req.user.userId, dto);
+    return this.learningService.createCourseModule(id, req.user.userId, dto, req.user.role);
+  }
+
+  @Put('courses/:id')
+  updateCourse(@Request() req, @Param('id') id: string, @Body() dto: any) {
+    return this.learningService.updateCourse(req.user.userId, req.user.role, id, dto);
+  }
+
+  @Delete('courses/:id')
+  deleteCourse(@Request() req, @Param('id') id: string) {
+    return this.learningService.deleteCourse(req.user.userId, req.user.role, id);
   }
 
   @Post('enroll')
