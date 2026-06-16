@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { LearningService } from './learning.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateCourseDto } from './dto/create-course.dto';
