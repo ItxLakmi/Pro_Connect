@@ -134,7 +134,7 @@ export default function CourseDetailPage() {
           amount: course.price,
           currency: "USD",
         });
-        const hash = hashRes.data.hash;
+        const { hash, merchantId, amountFormatted } = hashRes.data;
 
         // @ts-ignore
         if (!window.payhere) {
@@ -143,13 +143,13 @@ export default function CourseDetailPage() {
 
         const payment = {
           sandbox: true,
-          merchant_id: "1227091", // Sandbox Merchant ID
+          merchant_id: merchantId,
           return_url: window.location.href,
           cancel_url: window.location.href,
-          notify_url: "https://your-ngrok-url/api/monetization/payhere-webhook",
+          notify_url: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://proconnect-api.itxdigital.com'}/api/monetization/notify`,
           order_id: orderId,
           items: `Enrollment: ${course.title}`,
-          amount: Number(course.price).toFixed(2),
+          amount: amountFormatted,
           currency: "USD",
           hash: hash,
           first_name: user?.firstName || "Test",
@@ -166,11 +166,24 @@ export default function CourseDetailPage() {
 
         // @ts-ignore
         window.payhere.onCompleted = async function onCompleted() {
-          alert("Payment completed successfully! You are now enrolled. Refreshing page...");
-          // In real prod, webhook handles it, but we might want to manually poll or refresh
-          setTimeout(() => {
+          alert("Payment completed successfully! You are now enrolled.");
+          try {
+            // Local development bypass: PayHere sandbox cannot reach localhost via webhook.
+            // So we manually ping the webhook endpoint from the frontend to trigger enrollment.
+            await api.post("/monetization/notify", {
+              status_code: "2",
+              custom_1: "COURSE_ENROLLMENT",
+              custom_2: user?.id,
+              custom_3: course.id,
+              local_dev_bypass: true
+            });
+            // Fetch updated enrollment status
+            await checkEnrollment();
+          } catch (e) {
+            console.error("Error confirming payment with backend", e);
+            // Fallback to reload if something fails
             window.location.reload();
-          }, 3000);
+          }
         };
 
         // @ts-ignore
@@ -349,13 +362,36 @@ export default function CourseDetailPage() {
                   </span>
                 </div>
 
-                <h1 className="text-3xl font-bold mb-4">{activeModule ? activeModule.title : course.title}</h1>
+                <h1 className="text-3xl font-bold mb-4">{course.title}</h1>
                 <p className="text-foreground/70 text-lg leading-relaxed mb-6">
-                  {activeModule ? activeModule.description : course.description}
+                  {course.description}
                 </p>
 
+                {!isEnrolled && !canManage && (
+                  <div className="mb-8 p-6 glass rounded-2xl border border-accent/20 bg-accent/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">Unlock Full Course</h3>
+                      <p className="text-sm text-foreground/60">Get lifetime access to all modules, video lessons, and downloadable resources.</p>
+                    </div>
+                    <Button onClick={handleEnroll} size="lg" className="rounded-xl px-8 shadow-lg shadow-accent/20 shrink-0">
+                      Enroll for {course.price > 0 ? `$${course.price}` : 'Free'}
+                    </Button>
+                  </div>
+                )}
+
+                {activeModule && (
+                  <div className="mb-6 pt-6 border-t border-white/10">
+                    <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                      <span className="text-accent">Module:</span> {activeModule.title}
+                    </h2>
+                    {activeModule.description && (
+                      <p className="text-foreground/70 leading-relaxed">{activeModule.description}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Notes PDF download */}
-                {activeModule?.notesUrl && (
+                {activeModule?.notesUrl && (isEnrolled || canManage) && (
                   <motion.a
                     href={activeModule.notesUrl}
                     target="_blank"
@@ -602,11 +638,9 @@ export default function CourseDetailPage() {
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.04 }}
-                      onClick={() => (isEnrolled || canManage) && setActiveModuleIndex(idx)}
-                      disabled={!isEnrolled && !canManage}
+                      onClick={() => setActiveModuleIndex(idx)}
                       className={`
-                        w-full text-left p-4 rounded-xl flex items-start gap-4 transition-all
-                        ${(!isEnrolled && !canManage) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                        w-full text-left p-4 rounded-xl flex items-start gap-4 transition-all cursor-pointer
                         ${activeModuleIndex === idx
                           ? 'bg-accent/10 border border-accent/20'
                           : 'bg-white/5 hover:bg-white/10 border border-transparent'}
