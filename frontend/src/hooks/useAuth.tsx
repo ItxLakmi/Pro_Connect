@@ -1,0 +1,89 @@
+'use client';
+
+import { useState, useEffect, createContext, useContext } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  originalRole?: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+  isPremium?: boolean;
+}
+
+interface AuthContextType {
+  user: User | null;
+  token: string | null;
+  login: (token: string, user: User) => void;
+  logout: () => void;
+  updateUser: (partial: Partial<User>) => void;
+  isLoading: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = (newToken: string, newUser: User) => {
+    // Store originalRole so we can always find the user's base role even after switching
+    const userWithOriginal = {
+      ...newUser,
+      originalRole: newUser.originalRole ?? newUser.role,
+    };
+    setToken(newToken);
+    setUser(userWithOriginal);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(userWithOriginal));
+  };
+
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/login');
+  };
+
+  /** Patch specific fields of the stored user (e.g. role after switch). */
+  const updateUser = (partial: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      // Never overwrite originalRole when switching roles
+      const updated = { ...prev, ...partial, originalRole: prev.originalRole ?? prev.role };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}

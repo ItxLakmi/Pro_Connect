@@ -1,10 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050507;
-  --foreground: #f8fafc;
+  --background: #ffffff;
+  --foreground: #020617;
   --accent: #6366f1;
   --accent-secondary: #06b6d4;
+  --card: #f8fafc;
+  --card-border: #e2e8f0;
+  --glass: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] {
+  --background: #050507;
+  --foreground: #f8fafc;
+  --accent: #818cf8;
+  --accent-secondary: #22d3ee;
+  --card: #0a0a0a;
+  --card-border: rgba(255, 255, 255, 0.05);
   --glass: rgba(15, 15, 25, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
 }
@@ -14,6 +27,8 @@
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
   --color-accent-secondary: var(--accent-secondary);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -23,6 +38,7 @@ body {
   font-family: var(--font-sans);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .glass {
@@ -33,23 +49,14 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #818cf8 0%, #22d3ee 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.animate-glow {
-  animation: glow 8s ease-in-out infinite;
-}
-
-@keyframes glow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.6; }
-}
-
 @layer base {
   * {
-    @apply border-white/10;
+    @apply border-card-border;
   }
 }
