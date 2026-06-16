@@ -45,8 +45,9 @@ function VerifyEmailContent() {
         const response = await api.post('/auth/verify-email', { token });
         setStatus('success');
         setMessage(response.data.message || 'Your email has been successfully verified.');
-      } catch (error: any) {
-        console.error('Verification error:', error);
+      } catch (error) {
+        const err = error as any;
+        console.error('Verification error:', err);
         setStatus('error');
         setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
       }

@@ -77,8 +77,9 @@ export default function RegisterPage() {
       alert('Registration successful! Please check your email to verify your account.');
 
       router.push(getDashboardPath(user.role || data.role));
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.message;
+    } catch (error) {
+      const err = error as any;
+      const message = err.response?.data?.message || err.message;
       
       if (message === 'Email already exists') {
         setError('email', { type: 'manual', message: 'This email is already registered.' });

@@ -32,9 +32,10 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', data);
       setIsSuccess(true);
-    } catch (error: any) {
-      console.error('Error:', error.response?.data?.message || error.message);
-      alert(error.response?.data?.message || 'Failed to send reset link.');
+    } catch (error) {
+      const err = error as any;
+      console.error('Error:', err.response?.data?.message || err.message);
+      alert(err.response?.data?.message || 'Failed to send reset link.');
     }
   };
 
@@ -84,7 +85,7 @@ export default function ForgotPasswordPage() {
             <div className="space-y-6">
               <div className="p-4 rounded-xl bg-accent/10 border border-accent/20 text-center">
                 <p className="text-accent font-medium text-sm">
-                  If an account exists with that email, we've sent instructions to reset your password.
+                  If an account exists with that email, we&apos;ve sent instructions to reset your password.
                 </p>
               </div>
             </div>
