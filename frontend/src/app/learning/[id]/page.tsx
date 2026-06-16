@@ -149,7 +149,7 @@ export default function CourseDetailPage() {
           notify_url: "https://your-ngrok-url/api/monetization/payhere-webhook",
           order_id: orderId,
           items: `Enrollment: ${course.title}`,
-          amount: course.price,
+          amount: Number(course.price).toFixed(2),
           currency: "USD",
           hash: hash,
           first_name: user?.firstName || "Test",
