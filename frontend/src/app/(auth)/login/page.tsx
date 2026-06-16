@@ -42,9 +42,10 @@ export default function LoginPage() {
       login(access_token, user);
 
       router.push(getDashboardPath(user.role));
-    } catch (error: any) {
-      console.error('Login error:', error.response?.data?.message || error.message);
-      alert(error.response?.data?.message || 'Failed to login. Please check your credentials.');
+    } catch (error) {
+      const err = error as any;
+      console.error('Login error:', err.response?.data?.message || err.message);
+      alert(err.response?.data?.message || 'Failed to login. Please check your credentials.');
     }
   };
 
@@ -132,7 +133,7 @@ export default function LoginPage() {
           </div>
 
           <p className="mt-8 text-center text-sm text-foreground/50">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link href="/register" className="text-accent font-semibold hover:underline">
               Create one
             </Link>

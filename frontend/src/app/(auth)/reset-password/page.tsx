@@ -66,8 +66,9 @@ function ResetPasswordContent() {
         password: data.password
       });
       setIsSuccess(true);
-    } catch (error: any) {
-      console.error('Error:', error.response?.data?.message || error.message);
+    } catch (error) {
+      const err = error as any;
+      console.error('Error:', err.response?.data?.message || err.message);
       alert(error.response?.data?.message || 'Failed to reset password. The link may have expired.');
     }
   };
