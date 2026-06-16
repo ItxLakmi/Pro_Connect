@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as crypto from 'crypto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class MonetizationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private emailService: EmailService,
+  ) {}
 
   // --- Subscriptions ---
 
@@ -27,7 +33,7 @@ export class MonetizationService {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + (plan.billingCycle === 'YEARLY' ? 365 : 30));
 
-    return this.prisma.userSubscription.upsert({
+    const subscription = await this.prisma.userSubscription.upsert({
       where: {
         userId_planId: {
           userId,
@@ -46,6 +52,33 @@ export class MonetizationService {
         status: 'ACTIVE',
       },
     });
+
+    // Fetch user details for email/notification
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user) {
+      const planName = plan.name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      
+      // 1. In-app notification
+      await this.notificationsService.createNotification({
+        userId,
+        type: 'SUBSCRIPTION_SUCCESS',
+        title: 'Subscription Activated',
+        content: `Your ${planName} subscription has been successfully activated. Enjoy your premium features!`,
+        link: '/premium',
+      });
+
+      // 2. Email notification
+      if (user.email) {
+        await this.emailService.sendMail(
+          user.email,
+          'Subscription Activated - Pro Connect',
+          `Hello ${user.firstName},\n\nYour ${planName} subscription has been successfully activated. Enjoy your premium features!`,
+          `<h3>Subscription Activated</h3><p>Hello ${user.firstName},</p><p>Your <strong>${planName}</strong> subscription has been successfully activated. Enjoy your premium features!</p>`
+        );
+      }
+    }
+
+    return subscription;
   }
 
   async getUserSubscriptions(userId: string) {

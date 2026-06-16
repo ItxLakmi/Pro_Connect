@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
   User, MapPin, Link as LinkIcon, Calendar, Plus, Pencil,
   Briefcase, GraduationCap, Wrench, Terminal, Globe, ExternalLink,
   Award, X, Camera, Check, Star, FileText, Image as ImageIcon,
-  Video, Trash2, Download, Phone, Mail, ChevronDown, ChevronUp
+  Video, Trash2, Download, Phone, Mail, ChevronDown, ChevronUp, CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -338,16 +339,22 @@ export default function ProfilePage() {
   const [skillInput, setSkillInput] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
 
+  // Subscriptions state
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
+
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchProfile = useCallback(async () => {
     try {
-      const [profileRes, badgesRes] = await Promise.all([
+      const [profileRes, badgesRes, subsRes] = await Promise.all([
         api.get('/profiles/me'),
         api.get('/learning/my-badges').catch(() => ({ data: [] })),
+        api.get('/monetization/subscriptions').catch(() => ({ data: [] })),
       ]);
       const p = profileRes.data;
       setProfile(p);
       setBadges(badgesRes.data || []);
+      setSubscriptions(subsRes.data || []);
       setProfileForm({
         headline: p.headline || '',
         location: p.location || '',
@@ -374,6 +381,18 @@ export default function ProfilePage() {
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3000);
+  };
+
+  const handleCancelSubscription = async (subId: string) => {
+    if (!confirm('Are you sure you want to cancel this plan?')) return;
+    try {
+      await api.post(`/monetization/subscriptions/${subId}/cancel`);
+      showToast('Subscription canceled successfully.');
+      fetchProfile(); // Refresh to update status
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to cancel subscription.');
+    }
   };
 
   // ── Photo Handlers ────────────────────────────────────────────────────────
@@ -774,6 +793,63 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+            
+            {/* Billing & Subscriptions */}
+            <div className="bg-white dark:bg-white/5 rounded-2xl border border-border p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" /> Billing & Subscriptions
+                </h2>
+                <Link href="/premium" className="text-sm font-semibold text-blue-600 hover:underline">
+                  Manage Plans
+                </Link>
+              </div>
+              
+              <div className="space-y-4">
+                {subscriptions && subscriptions.length > 0 ? (
+                  subscriptions.map((sub: any) => (
+                    <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-gray-50/50 dark:bg-black/20 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shrink-0">
+                          <CreditCard className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white capitalize">
+                            {sub.plan.name.replace(/_/g, ' ')} Plan
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {sub.status === 'ACTIVE' ? 'Active until ' : 'Canceled on '}
+                            {new Date(sub.endDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {sub.status === 'ACTIVE' ? (
+                        <Button 
+                          variant="outline" 
+                          className="border-red-500/30 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 shrink-0"
+                          onClick={() => handleCancelSubscription(sub.id)}
+                        >
+                          Cancel Plan
+                        </Button>
+                      ) : (
+                        <div className="px-3 py-1.5 rounded-full bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-400 text-xs font-bold uppercase tracking-wider shrink-0 text-center">
+                          Canceled
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-xl">
+                    <p className="text-gray-400 text-sm mb-2">You don't have any active subscriptions.</p>
+                    <a href="/premium" className="text-sm font-semibold text-blue-600 hover:underline">
+                      Explore Premium Plans
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
 
           {/* Right Column */}

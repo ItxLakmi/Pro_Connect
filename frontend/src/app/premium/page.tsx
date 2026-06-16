@@ -90,12 +90,14 @@ const PlanCard = ({
   onSubscribe,
   onCancel,
   index,
+  hasActiveSub,
 }: {
   plan: SubscriptionPlan;
   isCurrent: boolean;
   onSubscribe: (plan: SubscriptionPlan) => void;
   onCancel: (plan: SubscriptionPlan) => void;
   index: number;
+  hasActiveSub?: boolean;
 }) => {
   const isFree = plan.name === "FREE";
   const isPremium = plan.name === "PREMIUM";
@@ -327,7 +329,7 @@ const PlanCard = ({
                 Cancel Plan
               </button>
             </div>
-        ) : isFree ? (
+        ) : isFree && !hasActiveSub ? (
           <div
             style={{
               textAlign: "center",
@@ -341,6 +343,21 @@ const PlanCard = ({
             }}
           >
             Your current plan
+          </div>
+        ) : isFree && hasActiveSub ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "14px",
+              borderRadius: "12px",
+              background: "#f9fafb",
+              border: "1.5px solid #e5e7eb",
+              color: "#9CA3AF",
+              fontWeight: 600,
+              fontSize: "14px",
+            }}
+          >
+            Basic Plan
           </div>
         ) : (
           <motion.button
@@ -467,15 +484,18 @@ export default function PremiumPage() {
 
       const { hash, merchantId, amountFormatted } = hashRes.data;
 
+      if (!window.payhere) {
+        throw new Error("PayHere script is not loaded. Please disable ad-blockers or try refreshing the page.");
+      }
+
       // 2. PayHere Payment Object Configuration
       const payment = {
         sandbox: true,
         merchant_id: merchantId,
         return_url: window.location.href,
         cancel_url: window.location.href,
-        // The webhook URL must be a public URL accessible by PayHere. 
-        // Replace this with your actual Ngrok or production API URL.
-        notify_url: "https://proconnect-api.itxdigital.com/monetization/notify",
+        // Webhook URL must be accessible by PayHere (use Ngrok for local testing)
+        notify_url: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://proconnect-api.itxdigital.com'}/api/monetization/notify`,
         order_id: orderId,
         items: selectedPlan.name + " Subscription",
         amount: amountFormatted, // Crucial: Must be string with 2 decimal places to match hash
@@ -575,7 +595,7 @@ export default function PremiumPage() {
         fontFamily: "'Inter', 'Segoe UI', sans-serif",
       }}
     >
-      <Script src="https://www.payhere.lk/lib/payhere.js" strategy="lazyOnload" />
+      <Script src="https://www.payhere.lk/lib/payhere.js" strategy="afterInteractive" />
       <Navbar />
 
       {/* Hero Section */}
@@ -843,6 +863,7 @@ export default function PremiumPage() {
                 onSubscribe={() => setSelectedPlan(plan)}
                 onCancel={handleCancelPlan}
                 index={i}
+                hasActiveSub={!!activeSub}
               />
             ))}
           </div>

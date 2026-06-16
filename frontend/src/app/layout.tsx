@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { CookieBanner } from "@/components/CookieBanner";
 
 export default function RootLayout({
@@ -26,7 +27,10 @@ export default function RootLayout({
         <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem>
           <AuthProvider>
             <Navbar />
-            {children}
+            <main className="flex-1 flex flex-col">
+              {children}
+            </main>
+            <Footer />
             <CookieBanner />
           </AuthProvider>
         </ThemeProvider>
@@ -34,5 +38,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-

@@ -20,7 +20,8 @@ import {
   ChevronDown,
   UserCog,
   Loader2,
-  Crown
+  Crown,
+  Grid
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { ThemeToggle } from './ThemeToggle';
@@ -35,8 +36,10 @@ export default function Navbar() {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [profileMenuOpen, setProfileMenuOpen] = React.useState(false);
+  const [exploreMenuOpen, setExploreMenuOpen] = React.useState(false);
   const [switchingRole, setSwitchingRole] = React.useState(false);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
+  const exploreMenuRef = React.useRef<HTMLDivElement>(null);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
@@ -52,11 +55,14 @@ export default function Navbar() {
     }
   }, [user, pathname]);
 
-  // Close profile menu on outside click
+  // Close menus on outside click
   React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
         setProfileMenuOpen(false);
+      }
+      if (exploreMenuRef.current && !exploreMenuRef.current.contains(e.target as Node)) {
+        setExploreMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -100,12 +106,15 @@ export default function Navbar() {
     { name: 'Home', href: '/feed', icon: <Home className="w-5 h-5" /> },
     { name: 'Network', href: '/network', icon: <Users className="w-5 h-5" /> },
     { name: 'Jobs', href: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
-    { name: 'Marketplace', href: '/marketplace', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Messages', href: '/messages', icon: <MessageSquare className="w-5 h-5" /> },
+    { name: 'Notifications', href: '/notifications', icon: notificationIcon },
+  ];
+
+  const professionalExploreItems = [
+    { name: 'Marketplace', href: '/marketplace', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Groups', href: '/community', icon: <Globe className="w-5 h-5" /> },
     { name: 'Learning', href: '/learning', icon: <GraduationCap className="w-5 h-5" /> },
     { name: 'Startups', href: '/investors', icon: <Rocket className="w-5 h-5" /> },
-    { name: 'Notifications', href: '/notifications', icon: notificationIcon },
   ];
 
   const recruiterNavItems = [
@@ -164,6 +173,9 @@ export default function Navbar() {
   };
 
   const navItems = user ? (roleNavItems[user.role] ?? professionalNavItems) : guestNavItems;
+  const exploreNavItems = user?.role === 'PROFESSIONAL' || user?.role === 'MENTOR' || user?.role === 'PARTNER' 
+    ? professionalExploreItems 
+    : [];
   const currentRole = user?.role as UserRole | undefined;
 
   if (['/login', '/register'].includes(pathname)) return null;
@@ -211,6 +223,46 @@ export default function Navbar() {
               <span className="hidden xl:block">{item.name}</span>
             </Link>
           ))}
+
+          {exploreNavItems.length > 0 && (
+            <div className="relative flex" ref={exploreMenuRef}>
+              <button
+                onClick={() => setExploreMenuOpen(prev => !prev)}
+                className={`
+                  p-2 lg:px-3 lg:py-2 rounded-xl flex flex-col xl:flex-row items-center gap-1 xl:gap-2 text-[10px] xl:text-sm font-medium transition-all
+                  ${exploreMenuOpen ? 'bg-accent/10 text-accent' : 'text-foreground/60 hover:bg-white/5 hover:text-foreground'}
+                `}
+                title="Explore"
+              >
+                <Grid className="w-5 h-5" />
+                <span className="hidden xl:block">Explore</span>
+              </button>
+
+              {exploreMenuOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-56 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-white/5 mb-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">More Tools</p>
+                  </div>
+                  {exploreNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setExploreMenuOpen(false)}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
+                        ${pathname.startsWith(item.href) ? 'bg-accent/10 text-accent font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'}
+                      `}
+                    >
+                      <div className={`p-1.5 rounded-md ${pathname.startsWith(item.href) ? 'bg-accent/20 text-accent' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'}`}>
+                        {item.icon}
+                      </div>
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Actions & Profile */}
