@@ -343,6 +343,31 @@ export default function ProfilePage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState(false);
 
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAiAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const [improvementsRes, skillGapRes, salaryRes] = await Promise.all([
+        api.get('/ai/profile-improvements'),
+        api.get('/ai/skill-gap?targetRole=Senior Developer'),
+        api.get('/ai/salary-prediction')
+      ]);
+      setAiAnalysis({
+        improvements: improvementsRes.data,
+        skillGap: skillGapRes.data,
+        salary: salaryRes.data
+      });
+    } catch (error) {
+      console.error('Failed to analyze profile', error);
+      setToast('AI Analysis failed. Please complete your profile first.');
+      setTimeout(() => setToast(''), 3000);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   // ── Fetch ────────────────────────────────────────────────────────────────
   const fetchProfile = useCallback(async () => {
     try {
@@ -873,6 +898,54 @@ export default function ProfilePage() {
                 className="w-full py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50">
                 {isSaving ? 'Saving...' : 'Update Profile'}
               </button>
+            </div>
+
+            {/* AI Profile Analyzer */}
+            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-2xl border border-indigo-200/50 dark:border-indigo-500/30 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <Star className="w-5 h-5 text-indigo-500" />
+                <h3 className="font-bold text-gray-900 dark:text-white">AI Profile Insights</h3>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-300 mb-4">
+                Let our AI analyze your profile, find skill gaps, and predict your salary range.
+              </p>
+              
+              {!aiAnalysis ? (
+                <button 
+                  onClick={handleAiAnalysis} 
+                  disabled={isAnalyzing}
+                  className="w-full py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isAnalyzing ? 'Analyzing...' : 'Generate AI Insights'}
+                </button>
+              ) : (
+                <div className="space-y-4 text-sm mt-4 border-t border-indigo-200/50 dark:border-indigo-500/30 pt-4">
+                  <div>
+                    <h4 className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Salary Prediction</h4>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">
+                      ${(aiAnalysis.salary.estimatedMin/1000).toFixed(0)}k - ${(aiAnalysis.salary.estimatedMax/1000).toFixed(0)}k / year
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Career Path</h4>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Suggested Next Role: <span className="font-medium">{aiAnalysis.skillGap?.suggestedPaths?.[0]?.role || 'Senior Role'}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Top Improvement</h4>
+                    <p className="text-gray-600 dark:text-gray-400 italic">
+                      "{aiAnalysis.improvements?.suggestions?.[0] || 'Add more skills to your profile.'}"
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setAiAnalysis(null)}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline mt-2 inline-block"
+                  >
+                    Clear Insights
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Verified Badges */}
