@@ -422,7 +422,10 @@ export class NetworkingService {
     const excludeIds = Array.from(new Set([...connectedIds, ...pendingIds]));
 
     return this.prisma.user.findMany({
-      where: { id: { notIn: excludeIds } },
+      where: { 
+        id: { notIn: excludeIds },
+        role: { not: 'ADMIN' }
+      },
       select: {
         id: true,
         firstName: true,
