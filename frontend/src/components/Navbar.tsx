@@ -345,33 +345,6 @@ export default function Navbar() {
                         <User className="w-4 h-4" /> My Profile
                       </Link>
 
-                      <div className="my-1.5 mx-4 border-t border-gray-100 dark:border-white/5"></div>
-
-                      {SWITCHABLE_ROLES.filter(role => role !== currentRole).map(role => (
-                        <button
-                          key={role}
-                          id={`nav-switch-to-${role.toLowerCase()}`}
-                          onClick={() => handleSwitchRole(role)}
-                          disabled={switchingRole}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
-                        >
-                          {switchingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCog className="w-4 h-4" />}
-                          {switchingRole ? 'Switching...' : `Switch to ${ROLE_LABELS[role]}`}
-                        </button>
-                      ))}
-
-                      {/* Admin-only: switch back to Admin role */}
-                      {user.originalRole === 'ADMIN' && user.role !== 'ADMIN' && (
-                        <button
-                          id="nav-switch-to-admin"
-                          onClick={() => handleSwitchRole('ADMIN')}
-                          disabled={switchingRole}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10 transition-colors disabled:opacity-50"
-                        >
-                          {switchingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserCog className="w-4 h-4" />}
-                          {switchingRole ? 'Switching...' : 'Switch to Admin'}
-                        </button>
-                      )}
                     </div>
 
                     {/* Logout */}
