@@ -427,7 +427,7 @@ model Enrollment {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   status    String   @default("ENROLLED") // ENROLLED, IN_PROGRESS, COMPLETED
   progress  Float    @default(0) // Percentage 0-100
   createdAt DateTime @default(now())
@@ -441,7 +441,7 @@ model Enrollment {
 model CourseModule {
   id          String   @id @default(cuid())
   courseId    String
-  course      Course   @relation(fields: [courseId], references: [id])
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title       String
   description String?
   videoUrl    String?
@@ -456,9 +456,9 @@ model CourseModule {
 model ModuleProgress {
   id           String       @id @default(cuid())
   enrollmentId String
-  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id])
+  enrollment   Enrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
   moduleId     String
-  module       CourseModule @relation(fields: [moduleId], references: [id])
+  module       CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   completed    Boolean      @default(false)
   completedAt  DateTime?
 
@@ -479,9 +479,9 @@ model LearningPath {
 model LearningPathCourse {
   id             String       @id @default(cuid())
   learningPathId String
-  learningPath   LearningPath @relation(fields: [learningPathId], references: [id])
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
   courseId       String
-  course         Course       @relation(fields: [courseId], references: [id])
+  course         Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   order          Int          @default(0)
 
   @@unique([learningPathId, courseId])
