@@ -125,9 +125,12 @@ export default function CourseDetailPage() {
       }
 
       try {
+        // Generate a single Order ID to use for both hash and payment
+        const orderId = `ENROLL_${Date.now()}_${user?.id}`;
+
         // 1. Get Payment Hash
         const hashRes = await api.post("/monetization/payhere-hash", {
-          orderId: `ENROLL_${Date.now()}_${user?.id}`,
+          orderId: orderId,
           amount: course.price,
           currency: "USD",
         });
@@ -144,7 +147,7 @@ export default function CourseDetailPage() {
           return_url: window.location.href,
           cancel_url: window.location.href,
           notify_url: "https://your-ngrok-url/api/monetization/payhere-webhook",
-          order_id: `ENROLL_${Date.now()}_${user?.id}`,
+          order_id: orderId,
           items: `Enrollment: ${course.title}`,
           amount: course.price,
           currency: "USD",
