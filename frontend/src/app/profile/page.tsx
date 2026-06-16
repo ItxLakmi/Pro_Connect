@@ -935,7 +935,7 @@ export default function ProfilePage() {
                   <div>
                     <h4 className="font-semibold text-indigo-700 dark:text-indigo-400 mb-1">Top Improvement</h4>
                     <p className="text-gray-600 dark:text-gray-400 italic">
-                      "{aiAnalysis.improvements?.suggestions?.[0] || 'Add more skills to your profile.'}"
+                      "{aiAnalysis.improvements?.suggestions?.[0]?.message || 'Add more skills to your profile.'}"
                     </p>
                   </div>
                   <button 
