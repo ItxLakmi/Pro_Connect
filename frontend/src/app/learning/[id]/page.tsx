@@ -12,6 +12,7 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
+import Script from 'next/script';
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -104,13 +105,87 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handleEnroll = async () => {
-    try {
-      await api.post(`/learning/enroll`, { courseId });
-      setIsEnrolled(true);
-      checkEnrollment();
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to enroll');
+  const handleEnroll = async (e?: React.MouseEvent) => {
+    if (course.price === 0) {
+      // Free course enrollment
+      try {
+        await api.post(`/learning/enroll`, { courseId });
+        setIsEnrolled(true);
+        checkEnrollment();
+      } catch (error: any) {
+        alert(error.response?.data?.message || 'Failed to enroll');
+      }
+    } else {
+      // DEV BYPASS: Force success without PayHere if user holds 'Shift' key
+      // We will call the webhook directly or an admin override (here we just alert)
+      if (e?.shiftKey) {
+        if (confirm('DEV BYPASS: This requires a webhook in production. To test, proceed without Shift key.')) {
+           // We cannot bypass this easily on frontend because backend webhook creates enrollment.
+        }
+      }
+
+      try {
+        // 1. Get Payment Hash
+        const hashRes = await api.post("/monetization/payhere-hash", {
+          orderId: `ENROLL_${Date.now()}_${user?.id}`,
+          amount: course.price,
+          currency: "USD",
+        });
+        const hash = hashRes.data.hash;
+
+        // @ts-ignore
+        if (!window.payhere) {
+          throw new Error("PayHere script is not loaded.");
+        }
+
+        const payment = {
+          sandbox: true,
+          merchant_id: "1227091", // Sandbox Merchant ID
+          return_url: window.location.href,
+          cancel_url: window.location.href,
+          notify_url: "https://your-ngrok-url/api/monetization/payhere-webhook",
+          order_id: `ENROLL_${Date.now()}_${user?.id}`,
+          items: `Enrollment: ${course.title}`,
+          amount: course.price,
+          currency: "USD",
+          hash: hash,
+          first_name: user?.firstName || "Test",
+          last_name: user?.lastName || "User",
+          email: user?.email || "test@example.com",
+          phone: "0771234567",
+          address: "No.1, Galle Road",
+          city: "Colombo",
+          country: "Sri Lanka",
+          custom_1: "COURSE_ENROLLMENT",
+          custom_2: user?.id,
+          custom_3: course.id,
+        };
+
+        // @ts-ignore
+        window.payhere.onCompleted = async function onCompleted() {
+          alert("Payment completed successfully! You are now enrolled. Refreshing page...");
+          // In real prod, webhook handles it, but we might want to manually poll or refresh
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        };
+
+        // @ts-ignore
+        window.payhere.onDismissed = function onDismissed() {
+          console.log("Payment dismissed");
+        };
+
+        // @ts-ignore
+        window.payhere.onError = function onError(errorMsg: string) {
+          alert("Payment Error: " + errorMsg);
+        };
+
+        // @ts-ignore
+        window.payhere.startPayment(payment);
+
+      } catch (error: any) {
+        alert(error.response?.data?.message || error.message || 'Failed to initialize payment');
+      }
     }
   };
 
@@ -194,6 +269,7 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-6 bg-background selection:bg-accent/30">
+      <Script src="https://www.payhere.lk/lib/payhere.js" strategy="afterInteractive" />
       <div className="max-w-7xl mx-auto">
 
         <Link href="/learning" className="inline-flex items-center gap-2 text-foreground/60 hover:text-accent transition-colors mb-6 text-sm font-bold uppercase tracking-wider">
@@ -534,7 +610,7 @@ export default function CourseDetailPage() {
                       `}
                     >
                       <div className="shrink-0 mt-0.5">
-                        {(isEnrolled || canManage) ? (
+                        {isEnrolled || canManage ? (
                           completedModuleIds.has(module.id) ? (
                             <CheckCircle className="w-5 h-5 text-green-500" />
                           ) : (

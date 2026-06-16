@@ -145,8 +145,9 @@ export class MonetizationService {
       payhere_currency,
       status_code,
       md5sig,
-      custom_1, // We will pass userId here
-      custom_2, // We will pass planId here
+      custom_1, // We will pass planId or COURSE_ENROLLMENT here
+      custom_2, // We will pass userId here
+      custom_3, // We will pass courseId here
     } = payload;
 
     // Verify md5sig
@@ -162,9 +163,21 @@ export class MonetizationService {
 
     // status_code: 2 = success
     if (parseInt(status_code) === 2 && custom_1 && custom_2) {
-      await this.subscribeUser(custom_1, custom_2);
-      console.log(`Successfully activated subscription for user ${custom_1}`);
-      return true;
+      if (custom_1 === 'COURSE_ENROLLMENT' && custom_3) {
+        // custom_2 is userId, custom_3 is courseId
+        await this.prisma.enrollment.create({
+          data: {
+            userId: custom_2,
+            courseId: custom_3,
+          },
+        });
+        console.log(`Successfully enrolled user ${custom_2} in course ${custom_3}`);
+        return true;
+      } else {
+        await this.subscribeUser(custom_1, custom_2);
+        console.log(`Successfully activated subscription for user ${custom_1}`);
+        return true;
+      }
     }
 
     return false;

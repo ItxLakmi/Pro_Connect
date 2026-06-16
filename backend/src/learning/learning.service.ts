@@ -14,6 +14,7 @@ export class LearningService {
     return this.prisma.course.create({
       data: {
         ...dto,
+        status: 'PENDING',
         instructorId,
       },
     });
@@ -21,6 +22,7 @@ export class LearningService {
 
   async getCourses() {
     return this.prisma.course.findMany({
+      where: { status: 'APPROVED' },
       include: {
         instructor: {
           select: { id: true, firstName: true, lastName: true, avatar: true },
@@ -84,7 +86,7 @@ export class LearningService {
     });
   }
 
-  async enrollInCourse(userId: string, courseId: string) {
+  async enrollInCourse(userId: string, role: string, courseId: string) {
     const course = await this.prisma.course.findUnique({
       where: { id: courseId },
     });
@@ -93,6 +95,9 @@ export class LearningService {
     }
     if (course.instructorId === userId) {
       throw new ForbiddenException('Instructors cannot enroll in their own courses.');
+    }
+    if ((course.price ?? 0) > 0 && role !== 'ADMIN') {
+      throw new ForbiddenException('Payment required to enroll in this course');
     }
     const existing = await this.prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId } },

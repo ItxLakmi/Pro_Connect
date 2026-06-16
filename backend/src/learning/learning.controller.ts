@@ -50,7 +50,7 @@ export class LearningController {
 
   @Post('enroll')
   enrollInCourse(@Request() req, @Body() dto: EnrollCourseDto) {
-    return this.learningService.enrollInCourse(req.user.userId, dto.courseId);
+    return this.learningService.enrollInCourse(req.user.userId, req.user.role, dto.courseId);
   }
 
   @Get('my-enrollments')
