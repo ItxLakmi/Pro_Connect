@@ -41,15 +41,15 @@ test.describe('Jobs Page', () => {
       'input[placeholder*="search" i], input[placeholder*="job" i], input[type="search"]'
     ).first();
 
-    if (await searchInput.isVisible()) {
-      await searchInput.fill('developer');
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(1000);
-      // URL should update or results should change
-      const url = page.url();
-      const hasSearchParam = url.includes('search=') || url.includes('developer');
-      expect(hasSearchParam || true).toBeTruthy(); // flexible assertion
-    }
+    await expect(searchInput).toBeVisible({ timeout: 8000 });
+    await searchInput.fill('Developer');
+    await page.keyboard.press('Enter');
+
+    // Wait for URL or DOM to reflect the search action
+    await page.waitForLoadState('networkidle');
+    const url = page.url();
+    const hasSearchParam = url.includes('search=') || url.includes('developer') || url.includes('Developer');
+    expect(hasSearchParam).toBeTruthy();
   });
 
   test('should navigate to job detail on click', async ({ page }) => {

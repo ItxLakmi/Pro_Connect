@@ -50,7 +50,7 @@ test.describe('Homepage & Navigation', () => {
   });
 
   test('should be responsive on tablet viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.setViewportSize({ width: 798, height: 1024 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     const nav = page.locator('nav, header').first();

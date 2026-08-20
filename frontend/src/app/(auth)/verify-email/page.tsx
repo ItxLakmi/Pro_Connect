@@ -49,7 +49,7 @@ function VerifyEmailContent() {
         const err = error as any;
         console.error('Verification error:', err);
         setStatus('error');
-        setMessage(error.response?.data?.message || 'Failed to verify email. The link may have expired.');
+        setMessage(err.response?.data?.message || 'Failed to verify email. The link may have expired.');
       }
     };
 
