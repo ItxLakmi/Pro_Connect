@@ -62,4 +62,3 @@ A comprehensive dashboard for platform administrators to manage:
 - **`/backend`**: Contains the NestJS application, API controllers, services, and the Prisma schema (`schema.prisma`) which defines the entire database architecture.
 
 ---
-*Generated automatically by your AI Assistant.*

@@ -188,7 +188,7 @@ export default function CourseDetailPage() {
 
         // @ts-ignore
         window.payhere.onDismissed = function onDismissed() {
-          console.log("Payment dismissed");
+          // User closed payment modal
         };
 
         // @ts-ignore

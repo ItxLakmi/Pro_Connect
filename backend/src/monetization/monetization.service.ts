@@ -185,8 +185,8 @@ export class MonetizationService {
         console.log(`Successfully enrolled user ${custom_2} in course ${custom_3}`);
         return true;
       } else {
-        await this.subscribeUser(custom_1, custom_2);
-        console.log(`Successfully activated subscription for user ${custom_1}`);
+        await this.subscribeUser(custom_2, custom_1);
+        console.log(`Successfully activated subscription for user ${custom_2} with plan ${custom_1}`);
         return true;
       }
     }
